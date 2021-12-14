@@ -1,0 +1,1 @@
+{"pixel_size": 229.9, "image_size": [2048, 2048], "pipette_orientation": 0, "pipette_diameter": 16, "rotation_angles": [0, 0, 0.043767], "focus_offset": 30}
