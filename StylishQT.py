@@ -152,7 +152,7 @@ class runButton(QtWidgets.QPushButton):
     """
     def __init__(self, label = '', parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/Run_1.png'))
+        self.setIcon(QIcon('./Icons/Run_1.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #FF99FF, stop:1 #9ED8FF);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #9999FF;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -169,7 +169,7 @@ class stop_deleteButton(QtWidgets.QPushButton):
     """
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/cross.png'))
+        self.setIcon(QIcon('./Icons/cross.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #CC0000, stop:1 #FF8000);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #660000;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -184,7 +184,7 @@ class cleanButton(QtWidgets.QPushButton):
     """
     def __init__(self, label = '', parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/clean.png'))
+        self.setIcon(QIcon('./Icons/clean.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #DAECD7, stop:1 #CEECEE);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #CCFFFF;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -216,7 +216,7 @@ class saveButton(QtWidgets.QPushButton):
     """
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/save.png'))
+        self.setIcon(QIcon('./Icons/save.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #56F6C6, stop:1 #00CC00);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #9999FF;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -231,7 +231,7 @@ class addButton(QtWidgets.QPushButton):
     """
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/add.png'))
+        self.setIcon(QIcon('./Icons/add.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #66FFFF, stop:1 #66FFB2);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #9999FF;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -246,7 +246,7 @@ class generateButton(QtWidgets.QPushButton):
     """
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/generate.png'))
+        self.setIcon(QIcon('./Icons/generate.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #39C0F0, stop:1 #CBF0FD);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #9999FF;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -272,8 +272,8 @@ class connectButton(QtWidgets.QPushButton):
         self.setGraphicsEffect(QGraphicsDropShadowEffect(blurRadius=3, xOffset=2, yOffset=2))  
         
         icon = QIcon()
-        icon.addPixmap(QPixmap('../Icons/disconnect.png'))
-        icon.addPixmap(QPixmap('../Icons/connect.png'), QIcon.Normal, QIcon.On)
+        icon.addPixmap(QPixmap('./Icons/disconnect.png'))
+        icon.addPixmap(QPixmap('./Icons/connect.png'), QIcon.Normal, QIcon.On)
         self.setIcon(icon)
         self.setToolTip("Connect/Disconnect")
 
@@ -283,7 +283,7 @@ class loadButton(QtWidgets.QPushButton):
     """
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/Load.png'))
+        self.setIcon(QIcon('./Icons/Load.png'))
         StyleSheet = ("QPushButton {color:#0000CC;font: bold;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #39C0F0, stop:1 #CBF0FD);border-radius: 8px;}" 
                       "QPushButton:hover:!pressed {color:white;background-color: #9999FF;border-radius: 8px;}"
                       "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}")
@@ -299,7 +299,7 @@ class disconnectButton(QtWidgets.QPushButton):
     """
     def __init__(self, parent = None):
         super().__init__(parent)
-        self.setIcon(QIcon('../Icons/disconnect.png')) 
+        self.setIcon(QIcon('./Icons/disconnect.png')) 
         self.setStyleSheet("QPushButton {color:black;background-color: qlineargradient( x1:0 y1:0, x2:1 y2:0, stop:0 #FF9999, stop:1 #FFCC99);border-radius: 8px;}"
                                           "QPushButton:hover:!pressed {color:white;background-color: #9999FF;border-radius: 8px;}"
                                           "QPushButton:disabled {color:white;background-color: grey;border-radius: 8px;}") 

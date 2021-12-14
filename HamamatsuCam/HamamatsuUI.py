@@ -1245,17 +1245,12 @@ class CameraUI(QMainWindow):
             self.Live_item_autolevel = False
         
     def LIVE(self):
-        # Connect live output signal to update the screen
-        self.output_signal_LiveImg.connect(self.UpdateScreen)
-        
         self.UpdateStatusLabel()
         
         self.isLiving = True
         self.hcam.acquisition_mode = "run_till_abort"
         self.hcam.startAcquisition()
         
-        # Start a timer
-        start_time = time.time()
         while self.isLiving == True: 
             [frames, dims] = self.hcam.getFrames() # frames is a list with HCamData type, with np_array being the image.
             self.Live_image = np.resize(frames[-1].np_array, (dims[1], dims[0]))
@@ -1263,17 +1258,11 @@ class CameraUI(QMainWindow):
             self.subarray_vsize = dims[1]
             self.subarray_hsize = dims[0]
             
-            # Do not update the screen if there is no possibility for a new frame
-            time.sleep(self.CamExposureBox.value())
+            time.sleep(self.Live_sleeptime)
+
+            self.UpdateScreen(self.Live_image)
             
-            # Frame rate of 25 frames/second
-            if time.time() - start_time > self.Live_sleeptime:
-                self.output_signal_LiveImg.emit(self.Live_image)
-                # Reset timer
-                start_time = time.time()
-            
-        # Disconnect live output signal to stop screen updates
-        self.output_signal_LiveImg.disconnect()
+            self.output_signal_LiveImg.emit(self.Live_image)
             
     def StopLIVE(self):
         self.isLiving = False
