@@ -12,7 +12,7 @@ def run_in_thread(fn, *args, **kwargs):
     """
     Send target function to thread.
     Usage: lambda: self.run_in_thread(self.fn)
-    
+
     Parameters
     ----------
     fn : function
@@ -26,4 +26,3 @@ def run_in_thread(fn, *args, **kwargs):
     """
     thread = threading.Thread(target=fn, args=args, kwargs=kwargs)
     thread.start()
-        
