@@ -130,7 +130,7 @@ class PatchclampSealTestUI(QWidget):
         # ----------------------------------------------------------------------
         # ----------------------------------GUI---------------------------------
         # ----------------------------------------------------------------------
-        self.setFixedHeight(700)
+        self.setFixedHeight(770)
         self.setWindowTitle("Patchclamp Seal Test")
 
         self.ICON_RED_LED = "./Icons/off.png"
@@ -163,6 +163,7 @@ class PatchclampSealTestUI(QWidget):
         gainLayout.addWidget(self.probeGainList, 1, 3)
 
         gainContainer.setLayout(gainLayout)
+        
         # ------------------------------Wavesettings-----------------------------------
         WavesettingsContainer = StylishQT.roundQGroupBox(title="Wave settings")
         # WavesettingsContainer.setFixedWidth(320)
@@ -180,11 +181,12 @@ class PatchclampSealTestUI(QWidget):
         self.LowerVoltagebox = QSpinBox(self)
         self.LowerVoltagebox.setMaximum(2000)
         self.LowerVoltagebox.setMinimum(-2000)
-        self.LowerVoltagebox.setValue(0)
-        self.LowerVoltagebox.setSingleStep(30)
+        self.LowerVoltagebox.setValue(-30)
+        self.LowerVoltagebox.setSingleStep(10)
         WavesettingsContainerLayout.addWidget(self.LowerVoltagebox, 0, 3)
 
         WavesettingsContainer.setLayout(WavesettingsContainerLayout)
+        
         # ------------------------------Membrane potential-----------------------------------
         Vm_measureContainer = StylishQT.roundQGroupBox(title="Vm measurement")
         # Vm_measureContainer.setFixedWidth(320)
@@ -211,6 +213,7 @@ class PatchclampSealTestUI(QWidget):
         Vm_measureContainerLayout.addWidget(self.VmstopButton, 0, 4)
 
         Vm_measureContainer.setLayout(Vm_measureContainerLayout)
+        
         # ------------------------------zap-----------------------------------
         zapContainer = StylishQT.roundQGroupBox(title="ZAP")
         # zapContainer.setFixedWidth(320)
@@ -228,7 +231,7 @@ class PatchclampSealTestUI(QWidget):
             "QPushButton:hover:!pressed {color:blue;background-color: white; border-style: outset;border-radius: 10px;border-width: 2px;font: bold 14px;padding: 6px}"
         )
         self.zapButton.setShortcut("z")
-        zapContainerLayout.addWidget(self.zapButton, 0, 1)
+        zapContainerLayout.addWidget(self.zapButton, 0, 6)
         self.zapButton.clicked.connect(self.zap)
 
         zapContainerLayout.addWidget(QLabel("ZAP voltage(V)"), 0, 2)
@@ -248,34 +251,45 @@ class PatchclampSealTestUI(QWidget):
         zapContainerLayout.addWidget(self.zaptimebox, 0, 5)
 
         zapContainer.setLayout(zapContainerLayout)
+        
+        # ------------------------------Hold Vm-----------------------------------
+        HoldContainer = StylishQT.roundQGroupBox(title="Set Vm")
+        HoldContainerLayout = QGridLayout()
+        
+        HoldContainerLayout.addWidget(QLabel("Holding voltage(mV):"), 1, 0)
+        self.HoldingList = QSpinBox(self)
+        self.HoldingList.setMaximum(200000000)
+        self.HoldingList.setMinimum(-200000000)
+        self.HoldingList.setValue(0)
+        self.HoldingList.setSingleStep(10)
+        HoldContainerLayout.addWidget(self.HoldingList, 1, 1)
+
+        # self.iconlabel = QLabel(self)
+        # self.iconlabel.setPixmap(QPixmap(self.ICON_RED_LED))
+        # HoldContainerLayout.addWidget(self.iconlabel, 1, 1)
+
+        self.holdingbutton = QPushButton("Hold")
+        # self.holdingbutton.setCheckable(True)
+        #self.holdingbutton.toggle()
+
+        # self.holdingbutton.clicked.connect(lambda: self.btnstate())
+        self.holdingbutton.clicked.connect(lambda: self.hold())
+        # self.holdingbutton.clicked.connect(self.setGreenlight)
+        HoldContainerLayout.addWidget(self.holdingbutton, 1, 2)
+
+        # self.stopandholdbutton = QPushButton("Stop and Hold")
+        # self.stopandholdbutton.clicked.connect(lambda: self.stopMeasurement())
+        # self.stopandholdbutton.clicked.connect(lambda: self.measure_hold())
+        # self.stopandholdbutton.clicked.connect(self.setGreenlight)
+        # HoldContainerLayout.addWidget(self.stopandholdbutton, 0, 2)
+        
+        HoldContainer.setLayout(HoldContainerLayout)
+        
         # ----------------------------Control-----------------------------------
         controlContainer = StylishQT.roundQGroupBox(title="Control")
         controlContainer.setFixedWidth(350)
         controlLayout = QGridLayout()
-
-        #        controlLayout.addWidget(QLabel("Holding Vm:"), 1, 0)
-        #        self.HoldingList = QComboBox()
-        #        self.HoldingList.addItems(['000 mV', '-30 mV', '-50 mV', '-40 mV', '-60 mV'])
-        #        controlLayout.addWidget(self.HoldingList, 2, 0)
-        #
-        #        self.iconlabel = QLabel(self)
-        #        self.iconlabel.setPixmap(QPixmap(self.ICON_RED_LED))
-        #        controlLayout.addWidget(self.iconlabel, 1, 1)
-        #
-        #        self.holdingbutton = QPushButton("Hold")
-        #        self.holdingbutton.setCheckable(True)
-        #        #self.holdingbutton.toggle()
-        #
-        #        self.holdingbutton.clicked.connect(lambda: self.btnstate())
-        #        #self.holdingbutton.clicked.connect(lambda: self.hold())
-        #        #self.holdingbutton.clicked.connect(self.setGreenlight)
-        #        controlLayout.addWidget(self.holdingbutton, 2, 1)
-
-        #        self.stopandholdbutton = QPushButton("Stop and Hold")
-        #        self.stopandholdbutton.clicked.connect(lambda: self.stopMeasurement())
-        #        self.stopandholdbutton.clicked.connect(lambda: self.measure_hold())
-        #        self.stopandholdbutton.clicked.connect(self.setGreenlight)
-        #        controlLayout.addWidget(self.stopandholdbutton, 0, 2)
+        
         """
         self.stopholdingbutton = QPushButton("Stop holding")
         self.stopholdingbutton.clicked.connect(lambda: self.stophold())
@@ -286,19 +300,20 @@ class PatchclampSealTestUI(QWidget):
         controlLayout.addWidget(WavesettingsContainer, 1, 0, 1, 2)
         controlLayout.addWidget(Vm_measureContainer, 2, 0, 1, 2)
         controlLayout.addWidget(zapContainer, 3, 0, 1, 2)
+        controlLayout.addWidget(HoldContainer, 4, 0, 1, 2)
 
         self.startButton = StylishQT.runButton("Start seal-test")
         self.startButton.clicked.connect(lambda: self.measure())
         # self.startButton.setFixedWidth(120)
         # self.startButton.clicked.connect(self.setRedlight)
         # self.startButton.clicked.connect(self.startUpdatingGUIThread)
-        controlLayout.addWidget(self.startButton, 4, 0, 1, 1)
+        controlLayout.addWidget(self.startButton, 5, 0, 1, 1)
 
         self.stopButton = StylishQT.stop_deleteButton()
         self.stopButton.setEnabled(False)
         # self.stopButton.setFixedWidth(120)
         self.stopButton.clicked.connect(lambda: self.stopMeasurement())
-        controlLayout.addWidget(self.stopButton, 4, 1, 1, 1)
+        controlLayout.addWidget(self.stopButton, 5, 1, 1, 1)
 
         controlContainer.setLayout(controlLayout)
 
@@ -420,7 +435,7 @@ class PatchclampSealTestUI(QWidget):
         False if not.
         """
         self.holdTest.setWave(
-            self.inVolGain, float(self.HoldingList.currentText()[0:3])
+            self.inVolGain, self.HoldingList.value()
         )
         self.holdTest.start()
         self.is_sealtesting = True
@@ -448,7 +463,7 @@ class PatchclampSealTestUI(QWidget):
         self.is_sealtesting = True
 
     def hold(self):
-        constant = float(self.HoldingList.currentText()[0:3])
+        constant = self.HoldingList.value()
         self.executer = DAQmission()
         self.executer.sendSingleAnalog("patchAO", constant / 1000 * 10)
         print("Holding vm at " + str(constant) + " mV")
@@ -460,11 +475,11 @@ class PatchclampSealTestUI(QWidget):
     def btnstate(self):
         # source = self.sender()
         if self.holdingbutton.isChecked():
-            self.measure_hold()
-            self.setGreenlight()
+            self.hold()
+            # self.setGreenlight()
         else:
-            self.stop_hold_Measurement()
-            self.setRedlight()
+            self.stophold()
+            # self.setRedlight()
 
     def setRedlight(self):
         self.iconlabel.setPixmap(QPixmap(self.ICON_RED_LED))
