@@ -8,7 +8,6 @@ Created on Fri Aug  6 15:15:38 2021
 import sys
 import numpy as np
 import logging
-import matplotlib.pyplot as plt
 
 from skimage import io
 
@@ -19,17 +18,15 @@ import pyqtgraph.exporters
 import pyqtgraph as pg
 
 sys.path.append('../')
-from NIDAQ.constants import MeasurementConstants
-from PatchClamp.manualpatcher_frontend import PatchclampSealTestUI
-# from PatchClamp.manualpatcher_backend import PatchclampSealTest
-
 from PatchClamp.smartpatcher_backend import SmartPatcher
-from PatchClamp.camerathread import CameraThread
-from PatchClamp.sealtestthread import SealTestThread
-from PatchClamp.pressurethread import PressureThread
-from PatchClamp.objective import PIMotor
-from PatchClamp.micromanipulator import ScientificaPatchStar
-from PatchClamp.stage import LudlStage
+from PatchClamp.ui_patchclamp_sealtest import PatchclampSealTestUI
+from PatchClamp.patchclamp import PatchclampSealTest
+from HamamatsuCam.camerathread import CameraThread
+from PI_ObjectiveMotor.focuser import PIMotor
+from PressureDevice.pressurethread import PressureThread
+from Micromanipulator.micromanipulator import ScientificaPatchStar
+from SampleStageControl.stage import LudlStage
+from NIDAQ.constants import MeasurementConstants
 
 
 
@@ -404,11 +401,9 @@ class PatchClampUI(QWidget):
         """
         logging.info('connect sealtestthread button pushed')
         if self.connect_sealtestthread_button.isChecked():
-            # sealtestthread = PatchclampSealTest()
-            sealtestthread = SealTestThread()
+            sealtestthread = PatchclampSealTest()
             
-            # self.signal_sealtest = sealtestthread.measurementThread.measurement
-            self.signal_sealtest = sealtestthread.measurement
+            self.signal_sealtest = sealtestthread.measurementThread.measurement
             self.signal_sealtest.connect(self.update_currentvoltageplot)
             
             self.backend.sealtestthread = sealtestthread
@@ -457,14 +452,15 @@ class PatchClampUI(QWidget):
         
         
     def request_snap(self):
-        if self.backend.camerathread != None:
-            I = self.backend.camerathread.snap()
-            io.imsave(self.backend.save_directory+'.tif', I, check_contrast=False)
-            self.update_snap(I)
-        else:
-            I = plt.imread("testimage.tif")
-            self.update_snap(I)
-            raise ValueError('no camera connected')
+        I = self.backend.camerathread.snap()
+        io.imsave(self.backend.save_directory+'.tif', I, check_contrast=False)
+        self.update_snap(I)
+        # if self.backend.camerathread != None:
+        #     I = self.backend.camerathread.snap()
+        #     io.imsave(self.backend.save_directory+'.tif', I, check_contrast=False)
+        #     self.update_snap(I)
+        # else:
+        #     raise ValueError('no camera connected')
     
     def request_release_pressure(self):
         self.backend.pressurethread.set_pressure_stop_waveform(0)
@@ -739,12 +735,11 @@ class PatchClampUI(QWidget):
             self.backend.STOP = False
         
     
-    # def moveEvent(self, event):
-    #     super(PatchClampUI, self).moveEvent(event)
-    #     try:
-    #         self.signal_camera_live.disconnect()
-    #     except:
-    #         pass
+    def moveEvent(self, event):
+        super(PatchClampUI, self).moveEvent(event)
+        self.request_pause_button.setChecked(True)
+        self.toggle_pauselive()
+        event.accept()
     
     
     def closeEvent(self, event):
@@ -775,8 +770,9 @@ class PatchClampUI(QWidget):
         
         event.accept()
         
-        # Frees the console by quitting the application entirely
-        QtWidgets.QApplication.quit() # remove when part of Tupolev!!
+        # Frees the console by quitting the application entirely. (uncomment if running at home)
+        # Will not let you re-run the GUI somehow. (comment if running in the lab, or with Fiumicino)
+        # QtWidgets.QApplication.quit()
         
         
 

@@ -11,7 +11,7 @@ import logging
 import numpy as np
 from PyQt5.QtCore import pyqtSignal, pyqtSlot, QThread
 
-from pressurecontroller import PressureController
+from PressureDevice.pressurecontroller import PressureController
 
 
 class PressureThread(QThread):
@@ -163,100 +163,3 @@ class PressureThread(QThread):
         np.save(save_directory+'pressure_recording_timing', timing)
             
         logging.info('pressure recording stopped')
-
-
-
-# class PressureThread(QThread):
-#     """ Pressure control dummy
-#     This class is for simulating output of the pressure controller.
-#     """
-#     measurement = pyqtSignal(np.ndarray)
-    
-#     def __init__(self, pressurecontroller_handle=None):
-#         self.parent = None
-#         self.waveform = None
-#         self.pressure_offset = 0
-        
-#         # QThread attributes
-#         super().__init__()
-#         self.isrunning = False
-#         self.isrecording = False
-#         self.moveToThread(self)
-#         self.started.connect(self.measure)
-    
-#     @property
-#     def parent(self):
-#         return self._parent
-    
-#     @parent.setter
-#     def parent(self, parent):
-#         self._parent = parent
-    
-#     @property
-#     def waveform(self):
-#         return self._waveform
-    
-#     @waveform.setter
-#     def waveform(self, function_handle):
-#         self._waveform = function_handle
-    
-#     @waveform.deleter
-#     def waveform(self):
-#         self._waveform = None
-    
-#     def stop(self):
-#         self.isrecording = False
-#         self.isrunning = False
-#         self.quit()
-#         self.wait()
-
-#     def set_pressure_stop_waveform(self, pressure):
-#         del self.waveform
-#         self.pressure_offset = pressure
-    
-#     def set_pulse_stop_waveform(self, magnitude):
-#         del self.waveform
-#         self.pressure_offset = magnitude
-#         time.sleep(0.05)
-#         self.pressure_offset = 0
-    
-#     def set_waveform(self, high, low, high_T, low_T):
-#         P = lambda t: high*(np.heaviside(t%(high_T+low_T),1) - np.heaviside(t%(high_T+low_T)-high_T,1)) + \
-#             low*(np.heaviside(t%(high_T+low_T)-high_T,1) - np.heaviside(t%(high_T+low_T)-high_T-low_T,1))
-#         self.waveform = P
-    
-#     @pyqtSlot()
-#     def measure(self):
-#         logging.info('pressure thread started')
-#         self.set_waveform(-100, -200, 1, 1)
-#         self.isrunning = True
-#         start = time.time()
-#         old_pressure = 0
-#         while self.isrunning:
-#             timestamp = time.time()-start
-#             output = self.pressure_offset + np.random.rand(2)*10-5
-#             self.measurement.emit(np.array([output[0], timestamp]))
-#             if self.waveform is not None:
-#                 new_pressure = self.waveform(timestamp)
-#                 if new_pressure != old_pressure:
-#                     self.pressure_offset = new_pressure
-#                     old_pressure = new_pressure
-#             if not self.isrecording:
-#                 QThread.msleep(10)
-#             else:
-#                 self.record(start)
-#         self.pressure_offset = 0
-#         logging.info('pressure thread stopped')
-    
-#     def record(self,start):
-#         logging.info("pressure recording started")
-#         PS1 = []
-#         timing = []
-#         while self.isrecording:
-#             output = self.pressure_offset + np.random.rand(2)*10-5
-#             timestamp = time.time() - start
-#             PS1.append(output[0])
-#             timing.append(timestamp)
-#             self.measurement.emit(np.array([PS1[-1], timestamp]))
-#             QThread.msleep(5)
-#         logging.info('pressure recording stopped')

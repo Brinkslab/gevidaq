@@ -27,7 +27,7 @@ class SmartPatcher(QObject):
         self.update_constants_from_JSON()           # rewrites above default constants
         
         # Algorithm constants
-        self.save_directory = os.getcwd()+'\\feedback\\'
+        self.save_directory = os.getcwd()+'\\PatchClamp\\feedback\\'
         self._operation_mode = 'Default'            # specifies worker mode
         self._pipette_coordinates_pair = np.array(  # [micromanipulator, camera]
             [[None,None,None], [None,None,None]])
@@ -261,8 +261,7 @@ class SmartPatcher(QObject):
     
     @sealtestthread.deleter
     def sealtestthread(self):
-        # self._sealtestthread.aboutToQuitHandler()
-        self._sealtestthread.stop()
+        self._sealtestthread.aboutToQuitHandler()
         self._sealtestthread = None
     
     
@@ -310,7 +309,7 @@ class SmartPatcher(QObject):
     
     @objectivemotor.deleter
     def objectivemotor(self):
-        self._objectivemotor.disconnect()
+        self._objectivemotor.CloseMotorConnection()
         self._objectivemotor = None
     
     
@@ -597,12 +596,6 @@ class SmartPatcher(QObject):
     
     @STOP.setter
     def STOP(self, state):
-        """
-        # 1. Stop QThreads
-        # 2. Stop hardware from moving
-        # 3. Set pressure to ATM
-        # 4. Set current/voltage to 0
-        """
         if state == True:
             self._STOP = True
             logging.info('Emergency stop active')

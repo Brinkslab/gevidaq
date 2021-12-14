@@ -39,7 +39,7 @@ import numpy as np
 import math
 from scipy.optimize import curve_fit
 
-from PatchClamp.manualpatcher_backend import (
+from PatchClamp.patchclamp import (
     PatchclampSealTest,
     PatchclampSealTest_hold,
     PatchclampSealTest_currentclamp,

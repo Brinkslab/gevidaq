@@ -13,7 +13,7 @@ import numpy as np
 from skimage import io
 from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
 
-from PatchClamp.ImageProcessing_patchclamp import PatchClampImageProcessing as ia
+from ImageAnalysis.ImageProcessing_patchclamp import PatchClampImageProcessing as ia
 
 
 class Worker(QObject):
@@ -264,8 +264,8 @@ class Worker(QObject):
                               [-25,25,0]])
         
         # bring focal plane beyond its offset where pipette tip is in focus
-        objective_position_reference = objective.getPos()
-        objective.moveAbs(z=objective_position_reference+CALIBRATION_HEIGHT/1000)
+        objective_position_reference = objective.GetCurrentPos()
+        objective.move(z=objective_position_reference+CALIBRATION_HEIGHT/1000)
         
         tipcoords1 = POSITIONS[:,0:2] * 0
         tipcoords2 = POSITIONS[:,0:2] * 0
@@ -327,7 +327,7 @@ class Worker(QObject):
             self._parent.pipette_coordinates_pair = np.vstack([reference, np.array([tipcoord[0], tipcoord[1], None])])
         
         # return objective to original position
-        objective.moveAbs(z=objective_position_reference)
+        objective.move(z=objective_position_reference)
         
         self.finished.emit()
         
@@ -368,8 +368,8 @@ class Worker(QObject):
         positionhistory = np.array([])
         
         #I) move objective up to not penatrate cells when focussing
-        objective_position_reference = objective.getPos()
-        objective.moveAbs(z=objective_position_reference+focus_offset/1000)
+        objective_position_reference = objective.GetCurrentPos()
+        objective.move(z=objective_position_reference+focus_offset/1000)
         
         #II) fill first three sharpness scores towards the tail of the graph
         pen = np.zeros(3)
@@ -536,7 +536,7 @@ class Worker(QObject):
         np.save(save_directory+'autofocus_penaltyhistory_'+timestamp, penaltyhistory)       #FLAG: relevant for MSc thesis
         
         #VIII) return objective to original position
-        objective.moveAbs(z=objective_position_reference)
+        objective.move(z=objective_position_reference)
         
         self.finished.emit()
     
