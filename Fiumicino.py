@@ -10,7 +10,7 @@ Created on Sat Aug 10 20:54:40 2019
     == Widget descriptions ==
     
     - HamamatsuCam.HamamatsuUI: Hamamatsu orca flash 4.0 camera user interface.
-    - PatchClamp.ui_patchclamp_sealtest: The GUI for patch clamp.
+    - PatchClamp.smartpatcher_frontend: The GUI for patch clamp.
     - NIDAQ.WaveformWidget: The GUI for configuring and executing waveforms in National Instrument Data Acquisition (DAQ) device.
     - GalvoWidget.PMTWidget: For PMT scanning imaging.
     - ImageAnalysis.AnalysisWidget: Data Analysis widget.
@@ -66,7 +66,7 @@ from PyQt5.QtWidgets import (
 import pyqtgraph as pg
 import StylishQT
 
-import PatchClamp.ui_patchclamp_sealtest
+import PatchClamp.smartpatcher_frontend
 import NIDAQ.WaveformWidget
 import GalvoWidget.PMTWidget
 import ImageAnalysis.AnalysisWidget
@@ -127,7 +127,7 @@ class Mainbody(QWidget):
         self.Galvo_WidgetInstance = GalvoWidget.PMTWidget.PMTWidgetUI()
         self.Waveformer_WidgetInstance = NIDAQ.WaveformWidget.WaveformGenerator()
         self.PatchClamp_WidgetInstance = (
-            PatchClamp.ui_patchclamp_sealtest.PatchclampSealTestUI()
+            PatchClamp.smartpatcher_frontend.PatchClampUI()
         )
         self.Analysis_WidgetInstance = ImageAnalysis.AnalysisWidget.AnalysisWidgetUI()
         self.Coordinate_WidgetInstance = (

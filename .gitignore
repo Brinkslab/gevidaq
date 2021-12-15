@@ -9,6 +9,7 @@ Deprecated
 
 # Large files:
 *.tif
+!testimage.tif
 *.png
 !Icons/*.png
 *.json
