@@ -88,6 +88,50 @@ class DAQmission(QThread):
         with nidaqmx.Task() as writingtask:
             writingtask.do_channels.add_do_chan(self.channelname)
             writingtask.write(writting_value)
+            
+    def sendServoSignal(self, servo_channel: str, open_servo: bool):
+        """
+        Opens (open_servo=True), or closes (open_servo=False) the beam path servo_channel.
+        
+        Parameters
+        servo_channel : str
+            Servo channel to send signal
+        open_servo : bool
+            Open or close servo
+
+        Returns
+        None.
+        """
+        print(servo_channel, open_servo)
+        sample_rate = 50000
+        total_duration = 0.25
+        frequency = 50
+        
+        
+        # set signal parameters using PWM.
+        if open_servo:
+            high_time = 0.002
+            low_time = 0.018
+        if not open_servo:
+            high_time = 0.001
+            low_time = 0.019
+        
+        num_cycles = round(total_duration * frequency)           
+            
+        high_samples = round(high_time * sample_rate)
+        low_samples = round(low_time * sample_rate)
+        pulse = [True] * high_samples + [False] * low_samples
+        signal = pulse * num_cycles
+    
+        # write waveform
+        self.channelname = self.channel_LUT[servo_channel]
+
+        with nidaqmx.Task() as writingtask:
+            writingtask.do_channels.add_do_chan(self.channelname, line_grouping=nidaqmx.constants.LineGrouping.CHAN_FOR_ALL_LINES)
+            writingtask.timing.cfg_samp_clk_timing(sample_rate, sample_mode=nidaqmx.constants.AcquisitionType.FINITE, samps_per_chan=len(signal))
+            writingtask.write(signal, auto_start=False)
+            writingtask.start()
+            time.sleep(total_duration)
 
     def runWaveforms(
         self,

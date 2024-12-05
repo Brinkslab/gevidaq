@@ -118,6 +118,9 @@ class WaveformGenerator(QWidget):
             "Perfusion_6",
             "Perfusion_2",
             "2Pshutter",
+            '532 servo',
+            '640 servo',
+            '488 servo', 
         ]
 
         self.color_dictionary = {
@@ -142,10 +145,14 @@ class WaveformGenerator(QWidget):
             "Perfusion_2": [255, 215, 0],
             "2Pshutter": [229, 204, 255],
             "DMD_trigger": [255, 215, 0],
+            '532 servo': [0, 200, 0],
+            '640 servo': [200, 0, 0],
+            '488 servo': [0, 0, 200],
         }
 
         self.PlotDataItem_dict = {}
         self.waveform_data_dict = {}
+        self.servo_dict = {}
 
         self.setMinimumSize(1000, 650)
         self.setWindowTitle("Buon appetito!")
@@ -1080,10 +1087,24 @@ class WaveformGenerator(QWidget):
                 len(self.waveform_data_dict[channel_keyword]), dtype=bool
             )
             self.generate_graphy(channel_keyword, rectified_waveform)
+            
+        elif 'servo' in channel_keyword:
+            if channel_keyword in self.servo_dict and self.Append_Mode:
+                servo_rectified_waveform = 5*np.ones(len(waveform_to_add), dtype=bool)
+                servo_rectified_waveform[:int(self.uiDaq_sample_rate*self.uiwaveoffset_digital_waveform/1000)] = 0
+                self.servo_dict[channel_keyword]['rectified_waveform'] = np.append(self.servo_dict[channel_keyword]['rectified_waveform'], servo_rectified_waveform)
+            else:
+                self.servo_dict[channel_keyword] = {
+                    'offset': self.uiwaveoffset_digital_waveform,
+                    'duration': self.uiwaveperiod_digital_waveform
+                }
+                servo_rectified_waveform = 5*np.ones(len(waveform_to_add), dtype=bool)
+                servo_rectified_waveform[:int(self.uiDaq_sample_rate*self.uiwaveoffset_digital_waveform/1000)] = 0
+                self.servo_dict[channel_keyword]['rectified_waveform'] = servo_rectified_waveform
+            rectified_waveform = self.servo_dict[channel_keyword]['rectified_waveform']
         else:
-            self.generate_graphy(
-                channel_keyword, self.waveform_data_dict[channel_keyword]
-            )
+            rectified_waveform = self.waveform_data_dict[channel_keyword]
+        self.generate_graphy(channel_keyword, rectified_waveform)
 
     def del_waveform_digital(self):
         channel_keyword = self.Digital_channel_combox.currentText()
@@ -1092,6 +1113,7 @@ class WaveformGenerator(QWidget):
 
         del self.PlotDataItem_dict[channel_keyword]
         del self.waveform_data_dict[channel_keyword]
+        del self.servo_dict[channel_keyword]
 
     def setExtraTriggerFlag(self):
         # Add extra 4 samples of one camera trigger or not
@@ -1503,15 +1525,28 @@ class WaveformGenerator(QWidget):
         else:
             self.uiwavegap_digital_waveform = int(self.DigGapTextbox.text())
 
-        digital_waveform = generate_digital_waveform(
+        if 'servo' in channel:
+            digital_waveform = generate_digital_waveform(
             self.uiDaq_sample_rate,
-            self.uiwavefrequency_digital_waveform,
+            50,
             self.uiwaveoffset_digital_waveform,
             self.uiwaveperiod_digital_waveform,
-            self.uiwaveDC_digital_waveform,
+            min(self.uiwaveDC_digital_waveform, 10), # minimum angle of given angle (5 = -90 degrees) and DC of 10: 90 degrees
             self.uiwaverepeat_digital_waveform_number,
             self.uiwavegap_digital_waveform,
+            True, # 5V signal
         )
+        else:
+            digital_waveform = generate_digital_waveform(
+                self.uiDaq_sample_rate,
+                self.uiwavefrequency_digital_waveform,
+                self.uiwaveoffset_digital_waveform,
+                self.uiwaveperiod_digital_waveform,
+                self.uiwaveDC_digital_waveform,
+                self.uiwaverepeat_digital_waveform_number,
+                self.uiwavegap_digital_waveform,
+                False # 1V signal
+            )
 
         return digital_waveform.generate()
 
@@ -1644,7 +1679,12 @@ class WaveformGenerator(QWidget):
             waveform = waveform.astype(int)
 
         x_label = np.arange(len(waveform)) / self.uiDaq_sample_rate
-        current_PlotDataItem = PlotDataItem(x_label, waveform, name=channel)
+        if 'servo' in channel:
+            # if showing servo -> zero for offset
+            current_PlotDataItem = PlotDataItem(x_label, waveform, name=channel)
+
+        else:
+            current_PlotDataItem = PlotDataItem(x_label, waveform, name=channel)
         current_PlotDataItem.setPen(self.color_dictionary[channel])
 
         if self.Append_Mode is True:
