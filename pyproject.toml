@@ -47,6 +47,16 @@ dependencies= [
   "tifffile",
 ]
 
+[tool.setuptools.package-data]
+gevidaq = [
+  "Icons/*.png",
+  "Icons/*.gif",
+  "HamamatsuCam/19_12/dcamapi.dll",
+  "ThorlabsKCube/Thorlabs.MotionControl.KCube.BrushlessMotor.dll",
+  "PI_ObjectiveMotor/PI_GCS2_DLL_x64.dll",
+  "CoordinatesManager/x64/alp4395.dll",
+]
+
 [project.urls]
 "Homepage" = "https://github.com/Brinkslab/gevidaq"
 "Bug Tracker" = "https://github.com/Brinkslab/gevidaq/issues"
