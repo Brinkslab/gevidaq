@@ -347,7 +347,7 @@ class generate_AO_for640:
 
 
 class generate_digital_waveform:
-    def __init__(self, value1, value2, value3, value4, value5, value6, value7):
+    def __init__(self, value1, value2, value3, value4, value5, value6, value7, value8):
         self.Daq_sample_rate = value1
         self.wavefrequency = value2
         self.waveoffset = value3
@@ -355,6 +355,7 @@ class generate_digital_waveform:
         self.waveDC = value5
         self.waverepeat = value6
         self.wavegap = value7
+        self.fiveVolts = value8
 
     def generate(self):
         self.offsetsamples_number = int(
@@ -400,6 +401,9 @@ class generate_digital_waveform:
         self.finalwave = np.append(self.offsetsamples, self.waverepeated)
         # self.finalwave = np.append(self.finalwave, False)
 
+        # Change voltage from 1V to 5V signal (for driving the servos)
+        if self.fiveVolts:
+            self.finalwave = 5*self.finalwave
         return self.finalwave
 
 

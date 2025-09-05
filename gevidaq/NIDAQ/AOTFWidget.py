@@ -41,6 +41,8 @@ class AOTFLaserUI(QWidget):
         self.wavelength = f"{wavelength}"
         self.channel = f"{wavelength}AO"
         self.blanking_channel = f"{wavelength}blanking"
+        self.servo = f'{wavelength} servo'
+        self.currentStatus = True
         self.signal = signal
         self.lasers_status = lasers_status
 
@@ -107,14 +109,9 @@ class AOTFLaserUI(QWidget):
         self.sig_lasers_status_changed.emit(self.lasers_status)
 
     def shutter_CW_action(self):
-        if self.wavelength == "488":  # only servo for blue laser is set up
-            servo = Servo()
-            if self.shutterButton.isChecked():
-                servo.rotate(target_servo="servo_modulation_1", degree=180)
-            else:
-                servo.rotate(target_servo="servo_modulation_1", degree=0)
-        else:
-            logging.info(f"shutter for {self.wavelength} laser is not set up")
+        daq = DAQmission()
+        self.currentStatus = not self.currentStatus
+            daq.sendServoSignal(self.servo, self.currentStatus)
 
 
 class AOTFWidgetUI(QWidget):
