@@ -19,19 +19,21 @@ import numpy as np
 import pyqtgraph as pg
 import tifffile as skimtiff
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, QRectF, Qt, QTimer, pyqtSignal
+from PyQt5.QtCore import QObject, QRectF, Qt, QThread, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QIcon, QMovie, QPen
 from PyQt5.QtWidgets import (
     QAction,
     QButtonGroup,
     QComboBox,
     QDoubleSpinBox,
+    QFileDialog,
     QGridLayout,
     QGroupBox,
     QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
+    QMessageBox,
     QProgressBar,
     QPushButton,
     QSlider,
@@ -43,17 +45,16 @@ from PyQt5.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
-import matplotlib.pyplot as plt
 from skimage.measure import block_reduce
-
 
 from .. import Icons, StylishQT
 from ..HamamatsuCam import HamamatsuDCAM
-from ..PythonScriptsNike.image_analyzer import ImageAnalyzer
 from ..PythonScriptsNike.camera_pmt_mapping import CameraPmtMapping
 from ..PythonScriptsNike.camera_pmt_registration import CameraPmtRegistration
-from ..PythonScriptsNike.camera_pmt_registration_points import CameraPmtRegistrationPoints
-
+from ..PythonScriptsNike.camera_pmt_registration_points import (
+    CameraPmtRegistrationPoints,
+)
+from ..PythonScriptsNike.image_analyzer import ImageAnalyzer
 
 """
 Some general settings for pyqtgraph, these only have to do with appearance
@@ -77,10 +78,14 @@ class CameraUI(QMainWindow):
     def __init__(self, pmt_widget_ui, waveform_widget, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.pmt_widget_ui = pmt_widget_ui 
-        pmt_widget_ui.GalvoCoordinatesCommand.connect(self.handle_galvo_coordinates)
+        self.pmt_widget_ui = pmt_widget_ui
+        pmt_widget_ui.GalvoCoordinatesCommand.connect(
+            self.handle_galvo_coordinates
+        )
         self.waveform_widget = waveform_widget
-        self.stream_parameters.connect(self.waveform_widget.handle_stream_parameters)
+        self.stream_parameters.connect(
+            self.waveform_widget.handle_stream_parameters
+        )
 
         self.cameraIsLive = False
         self.cameraIsStreaming = False
@@ -89,8 +94,10 @@ class CameraUI(QMainWindow):
         self.ROIselector_ispresented = False
         self.live_update_interval = 0.06666  # default camera live fps
         self.minimum_live_update_interval = 0.04
-        self.default_folder = "M:/tnw/ist/do/projects/Neurophotonics/Brinkslab/Data"
-        
+        self.default_folder = (
+            "M:/tnw/ist/do/projects/Neurophotonics/Brinkslab/Data"
+        )
+
         self.setWindowTitle("Hamamatsu Orca Flash")
         self.setFont(QFont("Arial"))
         self.setMinimumSize(1280, 1000)
@@ -123,35 +130,36 @@ class CameraUI(QMainWindow):
         MainWinCentralWidget = QWidget()
         main_layout = QGridLayout()  # Create the layout
         main_layout.setSpacing(10)
-        MainWinCentralWidget.setLayout(main_layout)  # Set the layout to MainWinCentralWidget
-        
+        MainWinCentralWidget.setLayout(
+            main_layout
+        )  # Set the layout to MainWinCentralWidget
 
         """
         # Camera settings container.
         """
-        CameraSettingContainer = StylishQT.roundQGroupBox(title="General settings")
+        CameraSettingContainer = StylishQT.roundQGroupBox(
+            title="General settings"
+        )
         CameraSettingContainer.setMaximumHeight(350)
         CameraSettingContainer.setMaximumWidth(332)
         CameraSettingLayout = QGridLayout()
-        
-        
-        CameraSettingContainer.setStyleSheet(
-        "QGroupBox {"
-        "    font: bold;"
-        "    border: 1px solid silver;"
-        "    border-radius: 6px;"
-        "    margin-top: 10px;"
-        "    padding: 0px;"  # Remove padding
-        "    color: Navy;"
-        "    font-size: 12px;"
-        "}"
-        "QGroupBox::title {"
-        "    subcontrol-origin: margin;"
-        "    left: 7px;"
-        "    padding: 5px 5px 5px 5px;"
-        "}"
-    )
 
+        CameraSettingContainer.setStyleSheet(
+            "QGroupBox {"
+            "    font: bold;"
+            "    border: 1px solid silver;"
+            "    border-radius: 6px;"
+            "    margin-top: 10px;"
+            "    padding: 0px;"  # Remove padding
+            "    color: Navy;"
+            "    font-size: 12px;"
+            "}"
+            "QGroupBox::title {"
+            "    subcontrol-origin: margin;"
+            "    left: 7px;"
+            "    padding: 5px 5px 5px 5px;"
+            "}"
+        )
 
         self.CamStatusLabel = QLabel("Camera not connected.")
         self.CamStatusLabel.setStyleSheet(
@@ -179,9 +187,11 @@ class CameraUI(QMainWindow):
 
         Label_readoutspeed = QLabel("Readout speed")
         Label_readoutspeed.setToolTip(
-            "The standard scan readout speed can achieve a frame rate of 100 fps for full resolution with low noise (1.0 electrons (median),\
-        1.6 electrons (r.m.s.)), and the slow scan readout speed can achieve even lower noise (0.8 electrons (median), 1.4 electrons (r.m.s.))\
-        with a frame rate of 30 fps for full resolution."
+            "The standard scan readout speed can achieve a frame rate of 100 "
+            "fps for full resolution with low noise (1.0 electrons (median), "
+            "1.6 electrons (r.m.s.)), and the slow scan readout speed can "
+            "achieve even lower noise (0.8 electrons (median), 1.4 electrons "
+            "(r.m.s.)) with a frame rate of 30 fps for full resolution."
         )
         CameraSettingTab_1.layout.addWidget(Label_readoutspeed, 2, 0)
         self.ReadoutSpeedSwitchButton = StylishQT.MySwitch(
@@ -201,9 +211,12 @@ class CameraUI(QMainWindow):
             self.DefectCorrectionSwitchEvent
         )
         self.DefectCorrectionButton.setToolTip(
-            "There are a few pixels in CMOS image sensor that have slightly higher readout noise performance compared to surrounding pixels.\
-        And the extended exposures may cause a few white spots which is caused by failure in part of the silicon wafer in CMOS image sensor.\
-        The camera has real-time variant pixel correction features to improve image quality."
+            "There are a few pixels in CMOS image sensor that have slightly "
+            "higher readout noise performance compared to surrounding pixels. "
+            "And the extended exposures may cause a few white spots which is "
+            "caused by failure in part of the silicon wafer in CMOS image "
+            "sensor. The camera has real-time variant pixel correction "
+            "features to improve image quality."
         )
         CameraSettingTab_1.layout.addWidget(self.DefectCorrectionButton, 2, 3)
 
@@ -229,7 +242,8 @@ class CameraUI(QMainWindow):
 
         Label_binning = QLabel("Binning:")
         Label_binning.setToolTip(
-            "Binning readout is a method for achieving high sensitivity in exchange for losing resolution."
+            "Binning readout is a method for achieving high sensitivity in "
+            "exchange for losing resolution."
         )
         CameraImageFormatLayout.addWidget(Label_binning, 0, 0)
         CameraImageFormatLayout.addWidget(self.BinningButton_1, 0, 1)
@@ -271,13 +285,16 @@ class CameraUI(QMainWindow):
         CamExposureButton.clicked.connect(self.SetExposureTimeFromCamera)
         self.allowUserInputForExposure = True
 
-        CameraSettingTab_1.layout.addWidget(QLabel("Exposure time:"), 4, 0, 1, 1)
+        CameraSettingTab_1.layout.addWidget(
+            QLabel("Exposure time:"), 4, 0, 1, 1
+        )
         CameraSettingTab_1.layout.addWidget(self.CamExposureBox, 4, 1, 1, 1)
         CameraSettingTab_1.layout.addWidget(CamExposureButton, 4, 2, 1, 1)
-        self.CamExposureBox.setToolTip("The exposure time setting can be done by the units of seconds.")
+        self.CamExposureBox.setToolTip(
+            "The exposure time setting can be done by the units of seconds."
+        )
 
         self.CamExposureBox.setKeyboardTracking(False)
-
 
         CameraSettingTab_1.setLayout(CameraSettingTab_1.layout)
 
@@ -288,18 +305,32 @@ class CameraUI(QMainWindow):
         CameraSettingTab_2.layout = QGridLayout()
 
         label_sub_array_mode_switch = QLabel("Readout region:")
-        label_sub_array_mode_switch.setToolTip("Sub-array readout is a procedure only a region of interest is scanned; while full size images whole frame.")
+        label_sub_array_mode_switch.setToolTip(
+            "Sub-array readout is a procedure only a region of interest is "
+            "scanned; while full size images whole frame."
+        )
         CameraSettingTab_2.layout.addWidget(label_sub_array_mode_switch, 0, 0)
-        self.SubArrayModeSwitchButton = StylishQT.MySwitch("Sub Array Mode", "lemon chiffon", "Full Image Size", "lavender", width=100)
+        self.SubArrayModeSwitchButton = StylishQT.MySwitch(
+            "Sub Array Mode",
+            "lemon chiffon",
+            "Full Image Size",
+            "lavender",
+            width=100,
+        )
         self.SubArrayModeSwitchButton.setChecked(False)
-        self.SubArrayModeSwitchButton.clicked.connect(self.SubArrayModeSwitchEvent)
-        CameraSettingTab_2.layout.addWidget(self.SubArrayModeSwitchButton, 0, 1, 1, 3)
+        self.SubArrayModeSwitchButton.clicked.connect(
+            self.SubArrayModeSwitchEvent
+        )
+        CameraSettingTab_2.layout.addWidget(
+            self.SubArrayModeSwitchButton, 0, 1, 1, 3
+        )
 
         # Adapted from Douwe's ROI part.
         self.center_roiButton = QPushButton()
         self.center_roiButton.setText("Symmetric to Center Line")
         self.center_roiButton.setToolTip(
-            "In normal configuration, place ROI symmetric to chip center line to achieve fastest frame rate."
+            "In normal configuration, place ROI symmetric to chip center line "
+            "to achieve fastest frame rate."
         )
         self.center_roiButton.clicked.connect(lambda: self.set_roi_flag())
         """
@@ -388,9 +419,7 @@ class CameraUI(QMainWindow):
         CameraSettingTab_2.layout.addWidget(self.ClearROIButton, 4, 2, 1, 2)
         CameraSettingTab_2.setLayout(CameraSettingTab_2.layout)
 
-        """
-        === Timing tab ===
-        """
+        # === Timing tab ===
         CameraSettingTab_3 = QWidget()
         CameraSettingTab_3.layout = QGridLayout()
 
@@ -398,22 +427,32 @@ class CameraUI(QMainWindow):
         self.TriggerButton_1 = QPushButton("Intern")
         self.TriggerButton_1.setCheckable(True)
         self.TriggerButtongroup.addButton(self.TriggerButton_1, 1)
-        self.TriggerButton_1.clicked.connect(lambda: self.TimingstackedWidget.setCurrentIndex(0))
+        self.TriggerButton_1.clicked.connect(
+            lambda: self.TimingstackedWidget.setCurrentIndex(0)
+        )
 
         self.TriggerButton_2 = QPushButton("Extern")
         self.TriggerButton_2.setCheckable(True)
         self.TriggerButtongroup.addButton(self.TriggerButton_2, 2)
-        self.TriggerButton_2.clicked.connect(lambda: self.TimingstackedWidget.setCurrentIndex(1))
+        self.TriggerButton_2.clicked.connect(
+            lambda: self.TimingstackedWidget.setCurrentIndex(1)
+        )
 
         self.TriggerButton_3 = QPushButton("MasterPulse")
         self.TriggerButton_3.setCheckable(True)
         self.TriggerButtongroup.addButton(self.TriggerButton_3, 3)
-        self.TriggerButton_3.clicked.connect(lambda: self.TimingstackedWidget.setCurrentIndex(2))
+        self.TriggerButton_3.clicked.connect(
+            lambda: self.TimingstackedWidget.setCurrentIndex(2)
+        )
         self.TriggerButtongroup.setExclusive(True)
 
-        self.TriggerButtongroup.buttonClicked[int].connect(self.SetTimingTrigger)
+        self.TriggerButtongroup.buttonClicked[int].connect(
+            self.SetTimingTrigger
+        )
 
-        CameraSettingTab_3.layout.addWidget(QLabel("Acquisition Control:"), 0, 0, 1, 2)
+        CameraSettingTab_3.layout.addWidget(
+            QLabel("Acquisition Control:"), 0, 0, 1, 2
+        )
         CameraSettingTab_3.layout.addWidget(self.TriggerButton_1, 1, 1)
         CameraSettingTab_3.layout.addWidget(self.TriggerButton_2, 1, 2)
         CameraSettingTab_3.layout.addWidget(self.TriggerButton_3, 1, 3)
@@ -432,21 +471,25 @@ class CameraUI(QMainWindow):
         ExternTriggerWidget.layout = QGridLayout()
         ExternTriggerWidget.layout.addWidget(QLabel("Trigger Signal:"), 0, 0)
         self.ExternTriggerSignalComboBox = QComboBox()
-        self.ExternTriggerSignalComboBox.addItems(["EDGE", "LEVEL", "SYNCREADOUT"])
+        self.ExternTriggerSignalComboBox.addItems(
+            ["EDGE", "LEVEL", "SYNCREADOUT"]
+        )
         self.ExternTriggerSignalComboBox.setCurrentIndex(2)
-        self.ExternTriggerSignalComboBox.activated.connect(self.SetTriggerActive)
+        self.ExternTriggerSignalComboBox.activated.connect(
+            self.SetTriggerActive
+        )
 
-        ExternTriggerWidget.layout.addWidget(self.ExternTriggerSignalComboBox, 0, 1)
+        ExternTriggerWidget.layout.addWidget(
+            self.ExternTriggerSignalComboBox, 0, 1
+        )
         ExternTriggerWidget.setLayout(ExternTriggerWidget.layout)
 
-        CameraSettingTab_3.layout.addWidget(self.TimingstackedWidget, 2, 0, 4, 4)
+        CameraSettingTab_3.layout.addWidget(
+            self.TimingstackedWidget, 2, 0, 4, 4
+        )
         CameraSettingTab_3.setLayout(CameraSettingTab_3.layout)
 
-        
-        """
-        ----------------------------Registration tab---------------------------------
-        """
-
+        # === Registration tab ===
         CameraSettingTab_4 = QWidget()
         CameraSettingTab_4.layout = QGridLayout()
 
@@ -458,16 +501,26 @@ class CameraUI(QMainWindow):
         self.registration_x_coord_pmt_value = QLineEdit()
         self.registration_x_coord_pmt_value.setEnabled(False)
         registration_y_coord_pmt_label = QLabel("Y-coordinate: ")
-        self.registration_y_coord_pmt_value = QLineEdit()        
+        self.registration_y_coord_pmt_value = QLineEdit()
         self.registration_y_coord_pmt_value.setEnabled(False)
 
-        CameraSettingTab_4.layout.addWidget(registration_point_pmt_label, 0, 0, 1, 2)
-        CameraSettingTab_4.layout.addWidget(registration_x_coord_pmt_label, 1, 0)
-        CameraSettingTab_4.layout.addWidget(self.registration_x_coord_pmt_value, 1, 1)
-        CameraSettingTab_4.layout.addWidget(registration_y_coord_pmt_label, 1, 2)
-        CameraSettingTab_4.layout.addWidget(self.registration_y_coord_pmt_value, 1, 3)
+        CameraSettingTab_4.layout.addWidget(
+            registration_point_pmt_label, 0, 0, 1, 2
+        )
+        CameraSettingTab_4.layout.addWidget(
+            registration_x_coord_pmt_label, 1, 0
+        )
+        CameraSettingTab_4.layout.addWidget(
+            self.registration_x_coord_pmt_value, 1, 1
+        )
+        CameraSettingTab_4.layout.addWidget(
+            registration_y_coord_pmt_label, 1, 2
+        )
+        CameraSettingTab_4.layout.addWidget(
+            self.registration_y_coord_pmt_value, 1, 3
+        )
 
-        registration_point_camera_label = QLabel("Registration Point Camera") 
+        registration_point_camera_label = QLabel("Registration Point Camera")
         registration_point_camera_label.setStyleSheet("font-weight: bold;")
         registration_x_coord_camera_label = QLabel("X-coordinate:")
         self.registration_x_coord_camera_value = QLineEdit()
@@ -476,11 +529,21 @@ class CameraUI(QMainWindow):
         self.registration_y_coord_camera_value = QLineEdit()
         self.registration_y_coord_camera_value.setEnabled(False)
 
-        CameraSettingTab_4.layout.addWidget(registration_point_camera_label, 2, 0, 1, 2)
-        CameraSettingTab_4.layout.addWidget(registration_x_coord_camera_label, 3, 0)
-        CameraSettingTab_4.layout.addWidget(self.registration_x_coord_camera_value, 3, 1)
-        CameraSettingTab_4.layout.addWidget(registration_y_coord_camera_label, 3, 2)
-        CameraSettingTab_4.layout.addWidget(self.registration_y_coord_camera_value, 3, 3)
+        CameraSettingTab_4.layout.addWidget(
+            registration_point_camera_label, 2, 0, 1, 2
+        )
+        CameraSettingTab_4.layout.addWidget(
+            registration_x_coord_camera_label, 3, 0
+        )
+        CameraSettingTab_4.layout.addWidget(
+            self.registration_x_coord_camera_value, 3, 1
+        )
+        CameraSettingTab_4.layout.addWidget(
+            registration_y_coord_camera_label, 3, 2
+        )
+        CameraSettingTab_4.layout.addWidget(
+            self.registration_y_coord_camera_value, 3, 3
+        )
 
         amplitude_label = QLabel("Amplitude: ")
         self.amplitude_value = QLineEdit()
@@ -506,14 +569,19 @@ class CameraUI(QMainWindow):
         CameraSettingTab_4.layout.addWidget(sigma_y_label, 5, 2)
         CameraSettingTab_4.layout.addWidget(self.sigma_y_value, 5, 3)
 
-        self.find_camera_registration_point = StylishQT.GeneralFancyButton(label="Find camera point")
+        self.find_camera_registration_point = StylishQT.GeneralFancyButton(
+            label="Find camera point"
+        )
         self.find_camera_registration_point.setEnabled(False)
-        self.find_camera_registration_point.clicked.connect(self.fit_gaussian_over_camera_img)
-        CameraSettingTab_4.layout.addWidget(self.find_camera_registration_point, 6, 1, 1, 2)
+        self.find_camera_registration_point.clicked.connect(
+            self.fit_gaussian_over_camera_img
+        )
+        CameraSettingTab_4.layout.addWidget(
+            self.find_camera_registration_point, 6, 1, 1, 2
+        )
 
         CameraSettingTab_4.setLayout(CameraSettingTab_4.layout)
 
-        # ----------------------------------------------------------------------
         CameraSettingTab.addTab(CameraSettingTab_1, "Camera")
         CameraSettingTab.addTab(CameraSettingTab_2, "ROI")
         CameraSettingTab.addTab(CameraSettingTab_3, "Timing")
@@ -525,65 +593,64 @@ class CameraUI(QMainWindow):
         CameraSettingContainer.setLayout(CameraSettingLayout)
 
         """
-        # =============================================================================
-        #         Camera tiff file import container.
-        #         Added by Nike Celie 8-1-2025
-        # =============================================================================
+        # Camera tiff file import container.
+        # Added by Nike Celie 8-1-2025
         """
-        
-        
-        # -----------------------TIFF File Import Container -----------------------------
+
+        # === TIFF File Import Container ===
         tiffImportContainer = StylishQT.roundQGroupBox("Import TIFF files")
-        tiffImportContainer.setMaximumHeight(70)  
+        tiffImportContainer.setMaximumHeight(70)
         tiffImportContainer.setMaximumWidth(325)
         tiffImportLayout = QGridLayout()
-        
+
         # Add "Browse" button for selecting the file
         self.browseTiffFileButton = QPushButton("Browse TIFF-files")
         self.browseTiffFileButton.setIcon(QIcon("./Icons/Browse.png"))
-        self.browseTiffFileButton.clicked.connect(self.browseTiffFiles) 
+        self.browseTiffFileButton.clicked.connect(self.browseTiffFiles)
         tiffImportLayout.addWidget(self.browseTiffFileButton, 0, 0)
-        
+
         # Add text box for displaying the selected TIFF file path
         self.tiffDirectoryTextbox = QLineEdit(self)
         self.tiffDirectoryTextbox.setPlaceholderText("Tiff file path")
         tiffImportLayout.addWidget(self.tiffDirectoryTextbox, 0, 1)
-        
+
         # Add the "Clear" button next to the file path textbox
         self.clearImageButton = QPushButton("Clear Image")
-        self.clearImageButton.clicked.connect(self.clearImage) 
+        self.clearImageButton.clicked.connect(self.clearImage)
         self.clearImageButton.setEnabled(False)
         tiffImportLayout.addWidget(self.clearImageButton, 0, 2)
-        
+
         # Set the layout for the container
         tiffImportContainer.setLayout(tiffImportLayout)
-    
-        
 
         """
-        # =============================================================================
-        #         Camera image inspection
-        #         Added by Nike Celie 8-1-2025
-        # =============================================================================
+        # Camera image inspection
+        # Added by Nike Celie 8-1-2025
         """
-        
+
         # Create an instance of the ImageAnalyzer class
-        file_path = r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Nike\cell0000.tif"
+        file_path = r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Nike\cell0000.tif"  # FIXME: hardcoded path
         self.image_analyzer = ImageAnalyzer(file_path)
         self.registrationPoints = CameraPmtRegistrationPoints()
 
-        # Connect the output_signal_camera_pmt_contour signal to the handleoutput_signal_camera_pmt_contour slot
-        self.output_signal_camera_pmt_contour.connect(self.pmt_widget_ui.handle_received_camera_contour)
-        
+        # Connect the output_signal_camera_pmt_contour signal to the
+        # handleoutput_signal_camera_pmt_contour slot
+        self.output_signal_camera_pmt_contour.connect(
+            self.pmt_widget_ui.handle_received_camera_contour
+        )
+
         # Camera Image Inspection Container
-        CameraImageInspectionContainer = StylishQT.roundQGroupBox("Contour generation")
-        CameraImageInspectionContainer.setMaximumHeight(150)  
+        CameraImageInspectionContainer = StylishQT.roundQGroupBox(
+            "Contour generation"
+        )
+        CameraImageInspectionContainer.setMaximumHeight(150)
         CameraImageInspectionContainer.setFixedWidth(325)
-    
+
         # Create the layout for the container
         self.CameraImageInspectionLayout = QGridLayout()
-        
-        # Create three QLabel widgets for displaying values (e.g., pixel coordinates and intensity)
+
+        # Create three QLabel widgets for displaying values
+        # (e.g., pixel coordinates and intensity)
         self.x_label = QLabel("X-coordinate: _")
         self.y_label = QLabel("Y-coordinate: _")
         self.intensity_label = QLabel("Intensity: _")
@@ -592,25 +659,33 @@ class CameraUI(QMainWindow):
         self.CameraImageInspectionLayout.addWidget(self.x_label, 0, 0)
         self.CameraImageInspectionLayout.addWidget(self.y_label, 0, 1)
         self.CameraImageInspectionLayout.addWidget(self.intensity_label, 0, 2)
-        
+
         # Create widgets for contour generation
         self.contourGenerationButton = QPushButton("Generate contour")
         self.contourGenerationButton.clicked.connect(self.generateContour)
         self.contourGenerationButton.setEnabled(False)
         self.contourIntensityInput = QLineEdit(self)
-        self.contourIntensityInput.textChanged.connect(self.checkContourIntensityInput)
-        self.contourIntensityInput.setPlaceholderText("Define intensity threshold")
+        self.contourIntensityInput.textChanged.connect(
+            self.checkContourIntensityInput
+        )
+        self.contourIntensityInput.setPlaceholderText(
+            "Define intensity threshold"
+        )
         self.removeGeneratedContourButton = QPushButton("Remove contour")
-        self.removeGeneratedContourButton.clicked.connect(self.removeGeneratedContour)
+        self.removeGeneratedContourButton.clicked.connect(
+            self.removeGeneratedContour
+        )
         self.removeGeneratedContourButton.setVisible(False)
 
         # Create sliders for adjusting the generated contour
         self.contourSizeSlider = QSlider(Qt.Horizontal)
-        self.contourSizeSlider.setMinimum(int(0.5 * 100))  
-        self.contourSizeSlider.setMaximum(int(1.5 * 100))  
-        self.contourSizeSlider.setSingleStep(int(0.05 * 100))  
-        self.contourSizeSlider.setValue(int(1.0 * 100)) 
-        self.contourSizeSlider.valueChanged.connect(self.updateGeneratedContour)
+        self.contourSizeSlider.setMinimum(int(0.5 * 100))
+        self.contourSizeSlider.setMaximum(int(1.5 * 100))
+        self.contourSizeSlider.setSingleStep(int(0.05 * 100))
+        self.contourSizeSlider.setValue(int(1.0 * 100))
+        self.contourSizeSlider.valueChanged.connect(
+            self.updateGeneratedContour
+        )
         self.contourSizeSlider.setVisible(False)
 
         self.contourSizeLabel = QLabel()
@@ -621,7 +696,9 @@ class CameraUI(QMainWindow):
         self.contourSmoothnessSlider.setMaximum(25)
         self.contourSmoothnessSlider.setSingleStep(1)
         self.contourSmoothnessSlider.setValue(1)
-        self.contourSmoothnessSlider.valueChanged.connect(self.updateGeneratedContour)
+        self.contourSmoothnessSlider.valueChanged.connect(
+            self.updateGeneratedContour
+        )
         self.contourSmoothnessSlider.setVisible(False)
 
         self.contourSmoothnessLabel = QLabel()
@@ -629,11 +706,13 @@ class CameraUI(QMainWindow):
 
         self.contourIntensitySlider = QSlider(Qt.Horizontal)
         self.contourIntensitySlider.setSingleStep(50)
-        self.contourIntensitySlider.valueChanged.connect(self.updateGeneratedContour)
+        self.contourIntensitySlider.valueChanged.connect(
+            self.updateGeneratedContour
+        )
         self.contourIntensitySlider.setVisible(False)
 
         self.contourIntensityLabel = QLabel()
-        self.contourIntensityLabel.setVisible(False)    
+        self.contourIntensityLabel.setVisible(False)
 
         # Create widgets for contour creation
         self.contourCreationProgress = QLabel()
@@ -643,47 +722,72 @@ class CameraUI(QMainWindow):
         self.saveContourButton.clicked.connect(self.saveCustomContour)
         self.saveContourButton.setVisible(False)
 
-        
-            
         # Add the widgets to the layout
-        self.CameraImageInspectionLayout.addWidget(self.contourGenerationButton, 1, 0)
-        self.CameraImageInspectionLayout.addWidget(self.contourIntensityInput, 1, 1)
-        self.CameraImageInspectionLayout.addWidget(self.removeGeneratedContourButton, 1, 2)
-        self.CameraImageInspectionLayout.addWidget(self.contourIntensityLabel, 2, 0)
-        self.CameraImageInspectionLayout.addWidget(self.contourSmoothnessLabel, 2, 1)
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourGenerationButton, 1, 0
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourIntensityInput, 1, 1
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.removeGeneratedContourButton, 1, 2
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourIntensityLabel, 2, 0
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourSmoothnessLabel, 2, 1
+        )
         self.CameraImageInspectionLayout.addWidget(self.contourSizeLabel, 2, 2)
-        self.CameraImageInspectionLayout.addWidget(self.contourIntensitySlider, 3, 0)
-        self.CameraImageInspectionLayout.addWidget(self.contourSmoothnessSlider, 3, 1)
-        self.CameraImageInspectionLayout.addWidget(self.contourSizeSlider, 3, 2)
-        self.CameraImageInspectionLayout.addWidget(self.contourCreationProgress, 4, 0)
-        self.CameraImageInspectionLayout.addWidget(self.saveContourButton, 4, 1)  
-    
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourIntensitySlider, 3, 0
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourSmoothnessSlider, 3, 1
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourSizeSlider, 3, 2
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.contourCreationProgress, 4, 0
+        )
+        self.CameraImageInspectionLayout.addWidget(
+            self.saveContourButton, 4, 1
+        )
 
         # Uncomment for user input contour, not fully debugged tho
+        if False:
+            self.contourCreationButton = QPushButton("Create contour")
+            self.contourCreationButton.clicked.connect(
+                self.createCustomContour
+            )
+            self.contourCreationButton.setEnabled(False)
 
-        # self.contourCreationButton = QPushButton("Create contour")
-        # self.contourCreationButton.clicked.connect(self.createCustomContour)
-        # self.contourCreationButton.setEnabled(False)
-        
-        # self.contourSizeInput = QLineEdit(self)
-        # self.contourSizeInput.textChanged.connect(self.checkContourSizeInput)
-        # self.contourSizeInput.setPlaceholderText("Define int # of points")
-        
-        self.createContour = False  
-        # self.CameraImageInspectionLayout.addWidget(self.contourCreationButton, 5, 0)
-        # self.CameraImageInspectionLayout.addWidget(self.contourSizeInput, 5, 1)
-        
+            self.contourSizeInput = QLineEdit(self)
+            self.contourSizeInput.textChanged.connect(
+                self.checkContourSizeInput
+            )
+            self.contourSizeInput.setPlaceholderText("Define int # of points")
+
+            self.CameraImageInspectionLayout.addWidget(
+                self.contourCreationButton, 5, 0
+            )
+            self.CameraImageInspectionLayout.addWidget(
+                self.contourSizeInput, 5, 1
+            )
+
+        self.createContour = False
+
         # Set the layout for the container
-        CameraImageInspectionContainer.setLayout(self.CameraImageInspectionLayout)
-        
+        CameraImageInspectionContainer.setLayout(
+            self.CameraImageInspectionLayout
+        )
+
         # Store the connection for later disconnection
         self.mouse_click_connection = None
-        
 
         """
-        # =============================================================================
-        #         Camera acquisition container.
-        # =============================================================================
+        # Camera acquisition container.
         """
 
         CameraAcquisitionContainer = StylishQT.roundQGroupBox("Acquisition")
@@ -691,7 +795,6 @@ class CameraUI(QMainWindow):
         CameraAcquisitionContainer.setMaximumWidth(325)
         CameraAcquisitionLayout = QGridLayout()
 
-        # ----------------------------------------------------------------------
         CamSpecContainer = QGroupBox()
         CamSpecContainer.setStyleSheet(
             "QGroupBox {"
@@ -725,15 +828,21 @@ class CameraUI(QMainWindow):
         CamSpecLayout = QGridLayout()
 
         self.CamFPSLabel = QLabel("Internal frame rate:     ")
-        self.CamFPSLabel.setStyleSheet("QLabel { background-color : azure; color : teal; }")
+        self.CamFPSLabel.setStyleSheet(
+            "QLabel { background-color : azure; color : teal; }"
+        )
         CamSpecLayout.addWidget(self.CamFPSLabel, 0, 0, 1, 1)
 
         self.CamExposureTimeLabel = QLabel("Exposure time:     ")
-        self.CamExposureTimeLabel.setStyleSheet("QLabel { background-color : azure; color : teal; }")
+        self.CamExposureTimeLabel.setStyleSheet(
+            "QLabel { background-color : azure; color : teal; }"
+        )
         CamSpecLayout.addWidget(self.CamExposureTimeLabel, 1, 0, 1, 1)
 
         self.CamReadoutTimeLabel = QLabel("Readout speed:     ")
-        self.CamReadoutTimeLabel.setStyleSheet("QLabel { background-color : azure; color : teal; }")
+        self.CamReadoutTimeLabel.setStyleSheet(
+            "QLabel { background-color : azure; color : teal; }"
+        )
         CamSpecLayout.addWidget(self.CamReadoutTimeLabel, 2, 0, 1, 1)
 
         # Add the Camera specs layout to a widget
@@ -744,7 +853,9 @@ class CameraUI(QMainWindow):
         title_layout.addWidget(CamSpecWidget)
 
         # Connect the toggle button to a slot to toggle visibility
-        toggle_button.clicked.connect(lambda: CamSpecWidget.setVisible(toggle_button.isChecked()))
+        toggle_button.clicked.connect(
+            lambda: CamSpecWidget.setVisible(toggle_button.isChecked())
+        )
 
         # Add the QGroupBox to the CameraAcquisitionLayout
         CameraAcquisitionLayout.addWidget(CamSpecContainer, 0, 0)
@@ -791,7 +902,8 @@ class CameraUI(QMainWindow):
         CamLiveActionLayout = QGridLayout()
 
         # self.LiveSwitchLabel = QLabel("Live switch:")
-        # self.LiveSwitchLabel.setStyleSheet("QLabel { color : navy; font-size: 10pt; }")
+        # self.LiveSwitchLabel.setStyleSheet(
+        # "QLabel { color : navy; font-size: 10pt; }")
         # self.LiveSwitchLabel.setFixedHeight(45)
         # self.LiveSwitchLabel.setAlignment(Qt.AlignCenter)
         # CamLiveActionLayout.addWidget(self.LiveSwitchLabel, 0, 0)
@@ -817,7 +929,9 @@ class CameraUI(QMainWindow):
 
         SaveLiveImgButton = StylishQT.saveButton()
         SaveLiveImgButton.setToolTip("Save live image directly.")
-        SaveLiveImgButton.clicked.connect(lambda: self.run_in_thread(self.SaveLiveImg()))
+        SaveLiveImgButton.clicked.connect(
+            lambda: self.run_in_thread(self.SaveLiveImg())
+        )
         CamLiveActionLayout.addWidget(SaveLiveImgButton, 1, 2, 1, 1)
 
         CamLiveActionContainer.setLayout(CamLiveActionLayout)
@@ -862,8 +976,13 @@ class CameraUI(QMainWindow):
         CamStreamActionLayout = QGridLayout()
 
         self.StreamStopSignalComBox = QComboBox()
-        self.StreamStopSignalComBox.addItems(["Stop signal: Time", "Stop signal: Frames"])
-        self.StreamStopSignalComBox.setToolTip("End acquisition after getting certain number of frames or pre-set time is past.")
+        self.StreamStopSignalComBox.addItems(
+            ["Stop signal: Time", "Stop signal: Frames"]
+        )
+        self.StreamStopSignalComBox.setToolTip(
+            "End acquisition after getting certain number of frames or "
+            "pre-set time is past."
+        )
         CamStreamActionLayout.addWidget(self.StreamStopSignalComBox, 1, 0)
 
         desired_fps_label = QLabel("Desired FPS")
@@ -896,11 +1015,15 @@ class CameraUI(QMainWindow):
             self.StreamBufferTotalFrames_spinbox, 2, 2
         )
         Label_buffernumber = QLabel("Buffer size:")
-        Label_buffernumber.setToolTip("Amount of frames to allocate in buffer to store the video.")
+        Label_buffernumber.setToolTip(
+            "Amount of frames to allocate in buffer to store the video."
+        )
         CamStreamActionLayout.addWidget(Label_buffernumber, 2, 1)
 
         self.StreamMemMethodComBox = QComboBox()
-        self.StreamMemMethodComBox.addItems(["Stream to Hard disk", "Stream to RAM"])
+        self.StreamMemMethodComBox.addItems(
+            ["Stream to Hard disk", "Stream to RAM"]
+        )
         CamStreamActionLayout.addWidget(self.StreamMemMethodComBox, 2, 0)
 
         ApplyStreamSettingButton = StylishQT.FancyPushButton(50, 22)
@@ -915,14 +1038,18 @@ class CameraUI(QMainWindow):
         self.startOrStopStreamButton.setCheckable(True)
         self.startOrStopStreamButton.setEnabled(False)
         self.startOrStopStreamButton.clicked.connect(self.StreamingSwitchEvent)
-        CameraAcquisitionTab_2.layout.addWidget(self.startOrStopStreamButton, 5, 3)
+        CameraAcquisitionTab_2.layout.addWidget(
+            self.startOrStopStreamButton, 5, 3
+        )
 
         """
         === Acquisition status ===
         """
 
         self.CamStreamIsFree = QLabel("No Stream Activity")
-        self.CamStreamIsFree.setStyleSheet("QLabel { background-color : azure; color : teal; font: bold;}")
+        self.CamStreamIsFree.setStyleSheet(
+            "QLabel { background-color : azure; color : teal; font: bold;}"
+        )
         self.CamStreamIsFree.setAlignment(Qt.AlignHCenter | Qt.AlignVCenter)
 
         CamStreamBusyWidget = QWidget()
@@ -930,7 +1057,9 @@ class CameraUI(QMainWindow):
 
         self.StreamStatusStackedWidget = QStackedWidget()
         self.StreamStatusStackedWidget.setFixedHeight(50)
-        self.StreamStatusStackedWidget.setStyleSheet("QStackedWidget { background-color : #F0F8FF;}")
+        self.StreamStatusStackedWidget.setStyleSheet(
+            "QStackedWidget { background-color : #F0F8FF;}"
+        )
 
         self.StreamStatusStackedWidget.addWidget(self.CamStreamIsFree)
         self.StreamStatusStackedWidget.addWidget(CamStreamBusyWidget)
@@ -965,14 +1094,28 @@ class CameraUI(QMainWindow):
         self.CamStreamSaving_progressbar.setMaximumWidth(250)
         self.CamStreamSaving_progressbar.setMaximum(100)
         self.CamStreamSaving_progressbar.setStyleSheet(
-            "QProgressBar {color: black;border: 1px solid grey; border-radius:3px;text-align: center;}"
-            "QProgressBar::chunk {background-color: #E6E6FA; width: 5px; margin: 1px;}"
+            """
+            QProgressBar {
+                color: black;
+                border: 1px solid grey;
+                border-radius:3px;
+                text-align: center;
+            }
+            QProgressBar::chunk {
+                background-color: #E6E6FA;
+                width: 5px;
+                margin: 1px;
+            }
+            """
         )
-        CamStreamSavingWidget.layout.addWidget(self.CamStreamSaving_progressbar, 0, 1, 1, 4)
+        CamStreamSavingWidget.layout.addWidget(
+            self.CamStreamSaving_progressbar, 0, 1, 1, 4
+        )
         CamStreamSavingWidget.setLayout(CamStreamSavingWidget.layout)
 
-        CameraAcquisitionTab_2.layout.addWidget(self.StreamStatusStackedWidget, 6, 0, 1, 4)
-        # ----------------------------------------------------------------------
+        CameraAcquisitionTab_2.layout.addWidget(
+            self.StreamStatusStackedWidget, 6, 0, 1, 4
+        )
         self.CamStreamActionContainer.setLayout(CamStreamActionLayout)
 
         CameraAcquisitionTab_2.layout.addWidget(
@@ -984,7 +1127,14 @@ class CameraUI(QMainWindow):
         CameraAcquisitionTab.addTab(CameraAcquisitionTab_1, "Live")
         CameraAcquisitionTab.addTab(CameraAcquisitionTab_2, "Stream")
         CameraAcquisitionTab.setStyleSheet(
-            "QTabBar { width: 200px; font-size: 8pt; font: bold; color: #003366}"
+            """
+            QTabBar {
+                width: 200px;
+                font-size: 8pt;
+                font: bold;
+                color: #003366
+            }
+            """
         )
         self.AcquisitionROIstackedWidget.addWidget(CameraAcquisitionTab)
 
@@ -1016,12 +1166,9 @@ class CameraUI(QMainWindow):
 
         CameraAcquisitionContainer.setLayout(CameraAcquisitionLayout)
 
-
-        """
         # === Live Screen ===
-        # Initiating an imageview object for the main Livescreen. Hiding the pre
-        # existing ROI and menubuttons.
-        """
+        # Initiating an imageview object for the main Livescreen. Hiding the
+        # pre existing ROI and menubuttons.
         LiveWidgetContainer = QGroupBox()
         LiveWidgetContainer.setMinimumHeight(920)
         LiveWidgetContainer.setMinimumWidth(950)
@@ -1059,7 +1206,8 @@ class CameraUI(QMainWindow):
         left_layout.addWidget(CameraImageInspectionContainer)
         left_layout.addWidget(CameraAcquisitionContainer)
 
-        # Add a stretch at the end to push any remaining space below the lowest container
+        # Add a stretch at the end to push any remaining space below the lowest
+        # container
         left_layout.addStretch()
 
         # Add the left layout to the main layout
@@ -1092,7 +1240,8 @@ class CameraUI(QMainWindow):
             ctypes.byref(paraminit)
         )  # TODO unused
         # if (error_code != DCAMERR_NOERROR):
-        # raise DCAMException("DCAM initialization failed with error code " + str(error_code))
+        # raise DCAMException(
+        # f"DCAM initialization failed with error code {error_code}")
 
         n_cameras = paraminit.iDeviceCount
 
@@ -1100,17 +1249,21 @@ class CameraUI(QMainWindow):
 
         if n_cameras > 0:
             # Initialization of the camera
-            self.hcam = HamamatsuCameraMR(camera_id=0)
+            self.hcam = HamamatsuDCAM.HamamatsuCameraMR(camera_id=0)
             self.CamStatusLabel.setText(self.hcam.getModelInfo(0))
-            
+
             # Set the camera to the default settings
             self.hcam.setPropertyValue("defect_correct_mode", 2)
             self.hcam.setPropertyValue("readout_speed", 2)
             # Set the binning to 1.
             self.hcam.setPropertyValue("binning", "1x1")
 
-            self.CamExposureTime = self.hcam.getPropertyValue("exposure_time")[0]
-            self.CamExposureTimeText = str(self.CamExposureTime).replace(".", "p")
+            self.CamExposureTime = self.hcam.getPropertyValue("exposure_time")[
+                0
+            ]
+            self.CamExposureTimeText = str(self.CamExposureTime).replace(
+                ".", "p"
+            )
             self.CamExposureBox.setValue(round(self.CamExposureTime, 5))
 
             self.GetKeyCameraProperties()
@@ -1256,20 +1409,31 @@ class CameraUI(QMainWindow):
 
     def UpdateHamamatsuSpecsLabels(self):
         # Get the frame rate and update in the tag
-        self.internal_frame_rate = self.hcam.getPropertyValue("internal_frame_rate")[0]
-        self.CamFPSLabel.setText("Frame rate: {}".format(round(self.internal_frame_rate, 2)))
+        self.internal_frame_rate = self.hcam.getPropertyValue(
+            "internal_frame_rate"
+        )[0]
+        self.CamFPSLabel.setText(
+            "Frame rate: {}".format(round(self.internal_frame_rate, 2))
+        )
 
         # Get the exposure time
         self.CamExposureTime = self.hcam.getPropertyValue("exposure_time")[0]
-        self.CamExposureTimeLabel.setText("Exposure time: {}".format(round(self.CamExposureTime, 5)))
+        self.CamExposureTimeLabel.setText(
+            "Exposure time: {}".format(round(self.CamExposureTime, 5))
+        )
 
         # Get the Readout time and update in the tag
-        self.timing_readout_time = self.hcam.getPropertyValue("timing_readout_time")[0]
-        self.CamReadoutTimeLabel.setText("Readout speed: {}".format(round(1 / self.timing_readout_time, 2)))
+        self.timing_readout_time = self.hcam.getPropertyValue(
+            "timing_readout_time"
+        )[0]
+        self.CamReadoutTimeLabel.setText(
+            "Readout speed: {}".format(round(1 / self.timing_readout_time, 2))
+        )
 
     def ReadoutSpeedSwitchEvent(self):
-        """
-        Set the readout speed. Default is fast, corresponding to 2 in "readout_speed".
+        """Set the readout speed.
+
+        Default is fast, corresponding to 2 in "readout_speed".
         """
         if self.ReadoutSpeedSwitchButton.isChecked():
             self.hcam.setPropertyValue("defect_correct_mode", 2)
@@ -1277,12 +1441,19 @@ class CameraUI(QMainWindow):
             self.hcam.setPropertyValue("defect_correct_mode", 1)
 
     def DefectCorrectionSwitchEvent(self):
-        """
-        There are a few pixels in CMOS image sensor that have slightly higher readout noise performance compared to surrounding pixels.
-        And the extended exposures may cause a few white spots which is caused by failure in part of the silicon wafer in CMOS image sensor.
-        The camera has real-time variant pixel correction features to improve image quality.
-        The correction is performed in real-time without sacrificing the readout speed at all. This function can be turned ON and OFF. (Default is ON)
-        User can choose the correction level for white spots depend on the exposure time.
+        """Switch defect correction.
+
+        There are a few pixels in CMOS image sensor that have slightly higher
+        readout noise performance compared to surrounding pixels.
+        And the extended exposures may cause a few white spots which is caused
+        by failure in part of the silicon wafer in CMOS image sensor.
+        The camera has real-time variant pixel correction features to improve
+        image quality.
+        The correction is performed in real-time without sacrificing the
+        readout speed at all. This function can be turned ON and OFF.
+        (Default is ON)
+        User can choose the correction level for white spots depend on the
+        exposure time.
         """
         if self.DefectCorrectionButton.isChecked():
             self.hcam.setPropertyValue("readout_speed", 1)
@@ -1303,19 +1474,30 @@ class CameraUI(QMainWindow):
 
         if self.allowUserInputForExposure:
             ui_exposure_time = self.CamExposureBox.value()
-            
+
             if ui_exposure_time < readout_time:
-                logging.warning("Trying to set an exposure time that's less than the readout time. Setting exposure time to readout time.")
+                logging.warning(
+                    "Trying to set an exposure time that's less than the"
+                    "readout time. Setting exposure time to readout time."
+                )
                 ui_exposure_time = readout_time
 
             self.CamExposureBox.setValue(ui_exposure_time)
             self.hcam.setPropertyValue("exposure_time", ui_exposure_time)
-            self.live_update_interval = self.minimum_live_update_interval if ui_exposure_time < self.minimum_live_update_interval else ui_exposure_time
-        else: 
+            self.live_update_interval = (
+                self.minimum_live_update_interval
+                if ui_exposure_time < self.minimum_live_update_interval
+                else ui_exposure_time
+            )
+        else:
             self.hcam.setPropertyValue("exposure_time", readout_time)
-            self.live_update_interval = self.minimum_live_update_interval if readout_time < self.minimum_live_update_interval else readout_time
+            self.live_update_interval = (
+                self.minimum_live_update_interval
+                if readout_time < self.minimum_live_update_interval
+                else readout_time
+            )
             self.allowUserInputForExposure = True
-        
+
         self.UpdateHamamatsuSpecsLabels()
 
     def SetBinning(self):
@@ -1377,7 +1559,8 @@ class CameraUI(QMainWindow):
                         self.ROI_vpos_spinbox.value() == 0
                         and self.ROI_vsize_spinbox.value() == 2048
                     ):
-                        # If it's the first time opening ROI selector, respawn it at a imageview center.
+                        # If it's the first time opening ROI selector, respawn
+                        # it at a imageview center.
                         self.ROIitem = pg.RectROI(
                             [924, 924],
                             [200, 200],
@@ -1385,16 +1568,24 @@ class CameraUI(QMainWindow):
                             sideScalers=True,
                             pen=ROIpen,
                         )
-                        # Create text object, use HTML tags to specify color/size
+                        # Create text object, use HTML tags to specify
+                        # color/size
                         self.ROIitemText = pg.TextItem(
-                            html='<div style="text-align: center"><span style="color: #FFF;">Estimated max fps: </span><span style="color: #FF0; \
-                            font-size: 10pt;">0</span></div>',
+                            html="""
+                                <div style="text-align: center">
+                                    <span style="color: #FFF;"
+                                        >Estimated max fps: </span>
+                                    <span style="color: #FF0; font-size: 10pt;"
+                                        >0</span>
+                                </div>
+                            """,
                             anchor=(1, 1),
                         )
                         self.ROIitemText.setPos(924, 924)
 
                     else:
-                        # If in the ROI position spinboxes there are numbers left from last ROI selection
+                        # If in the ROI position spinboxes there are numbers
+                        # left from last ROI selection
                         self.ROIitem = pg.RectROI(
                             [
                                 self.ROI_hpos_spinbox.value(),
@@ -1408,10 +1599,17 @@ class CameraUI(QMainWindow):
                             sideScalers=True,
                             pen=ROIpen,
                         )
-                        # Create text object, use HTML tags to specify color/size
+                        # Create text object, use HTML tags to specify
+                        # color/size
                         self.ROIitemText = pg.TextItem(
-                            html='<div style="text-align: center"><span style="color: #FFF;">Estimated max fps: </span><span style="color: #FF0; \
-                            font-size: 10pt;">0</span></div>',
+                            html="""
+                                <div style="text-align: center">
+                                    <span style="color: #FFF;"
+                                        >Estimated max fps: </span>
+                                    <span style="color: #FF0; font-size: 10pt;"
+                                        >0</span>
+                                </div>
+                            """,
                             anchor=(1, 1),
                         )
                         self.ROIitemText.setPos(
@@ -1435,8 +1633,14 @@ class CameraUI(QMainWindow):
                     )
                     # Create text object, use HTML tags to specify color/size
                     self.ROIitemText = pg.TextItem(
-                        html='<div style="text-align: center"><span style="color: #FFF;">Estimated max fps: </span><span style="color: #FF0; \
-                        font-size: 10pt;">0</span></div>',
+                        html="""
+                                <div style="text-align: center">
+                                    <span style="color: #FFF;"
+                                        >Estimated max fps: </span>
+                                    <span style="color: #FF0; font-size: 10pt;"
+                                        >0</span>
+                                </div>
+                            """,
                         anchor=(1, 1),
                     )
                     self.ROIitemText.setPos(
@@ -1454,8 +1658,14 @@ class CameraUI(QMainWindow):
                 )
                 # Create text object, use HTML tags to specify color/size
                 self.ROIitemText = pg.TextItem(
-                    html='<div style="text-align: center"><span style="color: #FFF;">Estimated max fps: </span><span style="color: #FF0; \
-                    font-size: 10pt;">0</span></div>',
+                    html="""
+                                <div style="text-align: center">
+                                    <span style="color: #FFF;"
+                                        >Estimated max fps: </span>
+                                    <span style="color: #FF0; font-size: 10pt;"
+                                        >0</span>
+                                </div>
+                            """,
                     anchor=(0, 0),
                 )
 
@@ -1466,9 +1676,11 @@ class CameraUI(QMainWindow):
             self.ROIitem.sigRegionChanged.connect(
                 self.update_ROI_spinbox_coordinates
             )
-            # This function ensures the spinboxes show the actual roi coordinates
+            # This function ensures the spinboxes show the actual roi
+            # coordinates
 
-            # Note that clicking is disabled by default to prevent stealing clicks from objects behind the ROI.
+            # Note that clicking is disabled by default to prevent stealing
+            # clicks from objects behind the ROI.
             # self.ROIitem.setAcceptedMouseButtons(Qt.LeftButton)
             # self.ROIitem.sigClicked.connect(self.ShowROIImage)
 
@@ -1483,7 +1695,7 @@ class CameraUI(QMainWindow):
     def set_roi_flag(self):
         if self.center_roiButton.isChecked():
             self.ROI_vpos_spinbox.setReadOnly(True)
-            self.center_frame = (0.5 * 2048)  
+            self.center_frame = 0.5 * 2048
             """
             I've put the center frame in the set_roi_flag so it automatically
             adjusts to the number of pixels (which is dependent on the binning
@@ -1501,8 +1713,8 @@ class CameraUI(QMainWindow):
             self.ROIitem.sigRegionChanged.disconnect()
             """
             I do not know how to disconnect one specific function, so I
-            disconnect both and then reconnect the update_ROI_spinbox_coordinates
-            function.
+            disconnect both and then reconnect the
+            update_ROI_spinbox_coordinates function.
             """
             self.ROIitem.sigRegionChanged.connect(
                 self.update_ROI_spinbox_coordinates
@@ -1524,7 +1736,9 @@ class CameraUI(QMainWindow):
     def update_ROI_estimateMaxFps(self):
         self.ROIupperRowDis = abs(1024 - self.ROI_vpos)
         self.ROIlowerRowDis = abs(1024 - self.ROI_vpos - self.ROI_vsize)
-        self.ROIEstimatedMaxFPS = 1 / (max(self.ROIupperRowDis, self.ROIlowerRowDis) * 0.0000097 )
+        self.ROIEstimatedMaxFPS = 1 / (
+            max(self.ROIupperRowDis, self.ROIlowerRowDis) * 0.0000097
+        )
 
         try:
             self.Live_view.removeItem(self.ROIitemText)
@@ -1533,8 +1747,13 @@ class CameraUI(QMainWindow):
 
         # Create text object, use HTML tags to specify color/size
         self.ROIitemText = pg.TextItem(
-            html='<div style="text-align: center"><span style="color: #FFF;">Estimated max fps: </span><span style="color: #FF0; \
-            font-size: 10pt;">{}</span></div>'.format(
+            html="""
+                <div style="text-align: center">
+                    <span style="color: #FFF;"
+                        >Estimated max fps: </span>
+                    <span style="color: #FF0; font-size: 10pt;"
+                        >{}</span></div>
+            """.format(
                 round(self.ROIEstimatedMaxFPS, 2)
             ),
             anchor=(1, 1),
@@ -1594,6 +1813,7 @@ class CameraUI(QMainWindow):
         self.ROI_vpos = self.ROI_vpos_spinbox.value()
 
         """The Orca Flash 4.0 requires the ROI size to be a multiple of 4."""
+
         def multiple_of_4(value):
             if value == 0:  # If the ROI size is 0, return 4
                 return 4
@@ -1611,7 +1831,13 @@ class CameraUI(QMainWindow):
             self.allowUserInputForExposure = False
             self.SetExposureTimeFromCamera()
         else:
-            self.setRoiParameters("OFF", self.ROI_hsize, self.ROI_vsize, self.ROI_hpos, self.ROI_vpos)  
+            self.setRoiParameters(
+                "OFF",
+                self.ROI_hsize,
+                self.ROI_vsize,
+                self.ROI_hpos,
+                self.ROI_vpos,
+            )
             self.hcam.setPropertyValue("subarray_mode", "ON")
             self.SubArrayModeSwitchButton.setChecked(True)
 
@@ -1624,11 +1850,24 @@ class CameraUI(QMainWindow):
         self.center_roiButton.setChecked(False)
 
         # Log key properties after setting the ROI
-        logging.info(f"ROI set to: hsize={self.ROI_hsize}, vsize={self.ROI_vsize}, hpos={self.ROI_hpos}, vpos={self.ROI_vpos}")
-        logging.info(f"Subarray mode: {self.hcam.getPropertyValue('subarray_mode')[0]}")
-        logging.info(f"Internal frame rate: {self.hcam.getPropertyValue('internal_frame_rate')[0]}")
-        logging.info(f"Readout speed: {self.hcam.getPropertyValue('timing_readout_time')[0]}")
-        logging.info(f"Exposure time: {self.hcam.getPropertyValue('exposure_time')[0]}")
+        logging.info(
+            f"ROI set to: hsize={self.ROI_hsize}, vsize={self.ROI_vsize}, "
+            f"hpos={self.ROI_hpos}, vpos={self.ROI_vpos}"
+        )
+        logging.info(
+            f"Subarray mode: {self.hcam.getPropertyValue('subarray_mode')[0]}"
+        )
+        logging.info(
+            "Internal frame rate: "
+            f"{self.hcam.getPropertyValue('internal_frame_rate')[0]}"
+        )
+        logging.info(
+            f"Readout speed: "
+            f"{self.hcam.getPropertyValue('timing_readout_time')[0]}"
+        )
+        logging.info(
+            f"Exposure time: {self.hcam.getPropertyValue('exposure_time')[0]}"
+        )
 
     def setRoiParameters(self, subarray_mode, hsize, vsize, hpos, vpos):
         self.hcam.setPropertyValue("subarray_mode", subarray_mode)
@@ -1656,22 +1895,21 @@ class CameraUI(QMainWindow):
         """
         # LIVE functions
         """
-   
 
     def AutoLevelSwitchEvent(self):
         if self.LiveAutoLevelSwitchButton.isChecked():
             self.Live_item_autolevel = True
         else:
             self.Live_item_autolevel = False
-        
+
         logging.info("AutoLevelSwitchEvent: ", self.Live_item_autolevel)
-    
+
     def LiveSwitchEvent(self):
         if self.LiveButton.isChecked():
             try:
                 self.ResetLiveImgView()
             except Exception as e:
-                logging.error(f"Error resetting live image view", exc_info=e)
+                logging.error("Error resetting live image view", exc_info=e)
 
             self.live_thread = QThread()
             self.live_worker = LiveWorker(self.hcam, self.live_update_interval)
@@ -1693,7 +1931,7 @@ class CameraUI(QMainWindow):
             self.SubArrayModeSwitchButton.setEnabled(True)
 
     def StopLIVE(self):
-        if hasattr(self, 'live_worker') and hasattr(self, 'live_thread'):
+        if hasattr(self, "live_worker") and hasattr(self, "live_thread"):
             if self.live_thread and self.live_thread.isRunning():
                 self.live_worker.stop()
                 self.live_thread.quit()
@@ -1722,37 +1960,60 @@ class CameraUI(QMainWindow):
         logging.info(f"Live image saved to {self.get_file_dir()}")
         logging.info(f"Metadata: {self.metaData}")
 
-
-    def update_displayed_image(self, tiff_image, reduce=False, set_viewbox=True):
+    def update_displayed_image(
+        self, tiff_image, reduce=False, set_viewbox=True
+    ):
         """Updates the screen with the latest image."""
         try:
             if reduce:
-                if (self.subarray_vsize == 2048 and self.subarray_hsize == 2048 and self.ROIselector_ispresented == False):
-                    tiff_image = block_reduce(image, block_size=(2, 2), func=np.mean, cval=np.mean(image))
+                if (
+                    self.subarray_vsize == 2048
+                    and self.subarray_hsize == 2048
+                    and self.ROIselector_ispresented is False
+                ):
+                    tiff_image = block_reduce(
+                        tiff_image,
+                        block_size=(2, 2),
+                        func=np.mean,
+                        cval=np.mean(tiff_image),
+                    )
 
-            self.Live_item.setImage(tiff_image, autoLevels=self.Live_item_autolevel)
+            self.Live_item.setImage(
+                tiff_image, autoLevels=self.Live_item_autolevel
+            )
             self.Live_image = tiff_image
             self.Live_item.resetTransform()
-    
+
             # Get the ViewBox and adjust its range to fit the image
             self.view_box = self.Live_item.getViewBox()
 
             if self.view_box and set_viewbox:
                 # Automatically scale the image to fit within the screen
                 self.view_box.enableAutoRange()
-    
+
                 # Limit the zoom level to prevent excessive zooming out
-                self.view_box.setLimits(xMin=0, xMax=tiff_image.shape[1], yMin=0, yMax=tiff_image.shape[0])
-    
+                self.view_box.setLimits(
+                    xMin=0,
+                    xMax=tiff_image.shape[1],
+                    yMin=0,
+                    yMax=tiff_image.shape[0],
+                )
+
             self.enable_pixel_coordinate_display()
             self.clearImageButton.setEnabled(True)
 
             # Update ROI checking screen
-            if hasattr(self,'ShowROIImgSwitch') and self.ShowROIImgSwitch == True:
-                self.ShowROIitem.setImage(self.ROIitem.getArrayRegion(image, self.Live_item), autoLevels=None)
-    
+            if (
+                hasattr(self, "ShowROIImgSwitch")
+                and self.ShowROIImgSwitch is True
+            ):
+                self.ShowROIitem.setImage(
+                    self.ROIitem.getArrayRegion(tiff_image, self.Live_item),
+                    autoLevels=None,
+                )
+
         except Exception as e:
-            print(f"Error displaying TIFF image: {e}")
+            logging.info(f"Error displaying TIFF image: {e}")
 
     def refresh_live_image(self, image):
         self.Live_image = image
@@ -1765,10 +2026,13 @@ class CameraUI(QMainWindow):
             return
 
         if self.cameraIsStreaming:
-            print("Trying to snap a picture while streaming. Stop the stream first.")
+            logging.info(
+                "Trying to snap a picture while streaming. Stop the stream "
+                "first."
+            )
             return
 
-        if hasattr(self, 'live_worker') and self.live_worker.camera_is_live:
+        if hasattr(self, "live_worker") and self.live_worker.camera_is_live:
             self.StopLIVE()  # Stop live acquisition before snapping
             self.snap_thread = QThread()
             self.snap_worker = LiveWorker(self.hcam, self.live_update_interval)
@@ -1800,14 +2064,17 @@ class CameraUI(QMainWindow):
 
     def on_snap_finished(self):
         self.LiveButton.setChecked(False)
-        print("Snap finished.")
+        logging.info("Snap finished.")
         self.refresh_live_image(self.Live_image)
-        
+
     def on_snap_error(self, error_message):
-        print(f"Error: {error_message}")
+        logging.error(f"Error: {error_message}")
 
     def ResetLiveImgView(self):
-        """Closes the widget nicely, making sure to clear the graphics scene and release memory."""
+        """Closes the widget nicely.
+
+        Makes sure to clear the graphics scene and release memory.
+        """
         self.LiveWidget.close()
 
         # Replot the imageview
@@ -1836,32 +2103,44 @@ class CameraUI(QMainWindow):
         """
 
     def UpdateBufferNumber(self):
-        self.BufferNumber = (self.desired_fps_spinbox.value() * self.StreamTotalTime_spinbox.value())
+        self.BufferNumber = (
+            self.desired_fps_spinbox.value()
+            * self.StreamTotalTime_spinbox.value()
+        )
         self.StreamBufferTotalFrames_spinbox.setValue(self.BufferNumber)
 
     def desiredFpsValid(self):
-        max_fps = 1/self.hcam.getPropertyValue("timing_readout_time")[0]
+        max_fps = 1 / self.hcam.getPropertyValue("timing_readout_time")[0]
         if self.desired_fps_spinbox.value() > max_fps:
-            logging.warning("Desired fps is higher than the max internal frame rate. Please decrease the ROI size or the desired fps.")
+            logging.warning(
+                "Desired fps is higher than the max internal frame rate. "
+                "Please decrease the ROI size or the desired fps."
+            )
             return False
-        elif (0 < self.desired_fps_spinbox.value()) and (self.desired_fps_spinbox.value() <= max_fps):
-            
+        elif (0 < self.desired_fps_spinbox.value()) and (
+            self.desired_fps_spinbox.value() <= max_fps
+        ):
+
             if self.TriggerButton_1.isChecked():
-                desired_exposure_time = (1 / self.desired_fps_spinbox.value())
-                logging.info(f"Desired fps is valid. Setting exposure time to {desired_exposure_time} s.") 
-                self.hcam.setPropertyValue("exposure_time", desired_exposure_time)
-                self.CamExposureBox.setValue(round(desired_exposure_time,5))
-            
+                desired_exposure_time = 1 / self.desired_fps_spinbox.value()
+                logging.info(
+                    "Desired fps is valid. Setting exposure time to "
+                    f"{desired_exposure_time} s."
+                )
+                self.hcam.setPropertyValue(
+                    "exposure_time", desired_exposure_time
+                )
+                self.CamExposureBox.setValue(round(desired_exposure_time, 5))
+
             return True
-        
 
     def SetStreamSpecs(self):
         if not self.savingPathValid("SetStreamSpecs"):
             return
-        
+
         if not self.desiredFpsValid():
             return
-        
+
         self.UpdateHamamatsuSpecsLabels()
 
         if self.CamStreamActionContainer.isEnabled():
@@ -1881,15 +2160,17 @@ class CameraUI(QMainWindow):
             self.StreamDuration = self.StreamTotalTime_spinbox.value()
             self.hcam.acquisition_mode = "fixed_length"
 
-        elif self.StreamStopSignalComBox.currentText() == "Stop signal: Frames":
+        elif (
+            self.StreamStopSignalComBox.currentText() == "Stop signal: Frames"
+        ):
             self.StopSignal = "Frames"
             self.StreamDuration = -1
             self.hcam.acquisition_mode = "fixed_length"
 
         # Emit the stream_parameters signal with desired_fps and total_time
         stream_parameters = {
-            'desired_fps': self.desired_fps_spinbox.value(),
-            'total_time': self.StreamTotalTime_spinbox.value()
+            "desired_fps": self.desired_fps_spinbox.value(),
+            "total_time": self.StreamTotalTime_spinbox.value(),
         }
         self.stream_parameters.emit(stream_parameters)
 
@@ -1908,31 +2189,52 @@ class CameraUI(QMainWindow):
     def StartStreamingThread(self):
         if not self.cameraIsStreaming and not self.cameraIsLive:
             self.streaming_thread = QThread()
-            self.streaming_worker = StreamingWorker(self.hcam, self.StopSignal, self.BufferNumber, self.StreamDuration)
+            self.streaming_worker = StreamingWorker(
+                self.hcam,
+                self.StopSignal,
+                self.BufferNumber,
+                self.StreamDuration,
+            )
             self.streaming_worker.moveToThread(self.streaming_thread)
 
             self.streaming_thread.started.connect(self.streaming_worker.run)
-            self.streaming_worker.update_label.connect(self.update_streaming_label)
-            self.streaming_worker.update_progress.connect(self.update_progress_bar)
+            self.streaming_worker.update_label.connect(
+                self.update_streaming_label
+            )
+            self.streaming_worker.update_progress.connect(
+                self.update_progress_bar
+            )
             self.streaming_worker.finished.connect(self.on_streaming_finished)
             self.streaming_worker.error.connect(self.on_streaming_error)
-            self.streaming_worker.streaming_finished.connect(lambda: self.StopStreaming(saveFile=True))
+            self.streaming_worker.streaming_finished.connect(
+                lambda: self.StopStreaming(saveFile=True)
+            )
             self.streaming_worker.finished.connect(self.streaming_thread.quit)
-            self.streaming_worker.finished.connect(self.streaming_worker.deleteLater)
-            self.streaming_thread.finished.connect(self.streaming_thread.deleteLater)
+            self.streaming_worker.finished.connect(
+                self.streaming_worker.deleteLater
+            )
+            self.streaming_thread.finished.connect(
+                self.streaming_thread.deleteLater
+            )
 
             self.streaming_thread.start()
 
-        else :
-            logging.warning("Camera is already streaming or live. Stop the stream first.")
+        else:
+            logging.warning(
+                "Camera is already streaming or live. Stop the stream first."
+            )
 
     def StopStreamingThread(self):
-        if hasattr(self, 'streaming_worker') and hasattr(self, 'streaming_thread') and self.streaming_thread.isRunning():
+        if (
+            hasattr(self, "streaming_worker")
+            and hasattr(self, "streaming_thread")
+            and self.streaming_thread.isRunning()
+        ):
             self.streaming_worker.stop_streaming()
             self.streaming_thread.quit()
             self.streaming_thread.wait()
         logging.info("Streaming manually stopped.")
-        
+
     def update_streaming_label(self, text):
         self.CamStreamingLabel.setText(text)
 
@@ -1941,7 +2243,9 @@ class CameraUI(QMainWindow):
 
     def on_streaming_finished(self):
         self.startOrStopStreamButton.setEnabled(False)
-        self.startOrStopStreamButton.setIcon(QIcon("./Icons/StartStreaming.png"))
+        self.startOrStopStreamButton.setIcon(
+            QIcon("./Icons/StartStreaming.png")
+        )
         self.CamStreamActionContainer.setEnabled(True)
         self.StreamStatusStackedWidget.setCurrentIndex(2)
 
@@ -1949,19 +2253,31 @@ class CameraUI(QMainWindow):
         if len(self.streaming_worker.video_list) >= 3:
             third_frame = self.streaming_worker.video_list[2]
             if self.streaming_worker.dims:
-                third_frame = np.resize(third_frame, (self.streaming_worker.dims[1], self.streaming_worker.dims[0]))
+                third_frame = np.resize(
+                    third_frame,
+                    (
+                        self.streaming_worker.dims[1],
+                        self.streaming_worker.dims[0],
+                    ),
+                )
             self.refresh_live_image(third_frame)
-        
+
     def on_streaming_error(self, error_message):
-        print(f"Error: {error_message}")
+        logging.info(f"Error: {error_message}")
 
     def StopStreaming(self, saveFile):
         # Stop the acquisition
         self.AcquisitionEndTime = time.time()
         streamTime = self.AcquisitionEndTime - self.hcam.AcquisitionStartTime
-        logging.info("Frames acquired: " + str(self.streaming_worker.image_count))
-        logging.info("Total time is: {} s.".format(streamTime) )
-        logging.info("Estimated fps: {} hz.".format(int(self.streaming_worker.image_count / (streamTime))))
+        logging.info(
+            "Frames acquired: " + str(self.streaming_worker.image_count)
+        )
+        logging.info("Total time is: {} s.".format(streamTime))
+        logging.info(
+            "Estimated fps: {} hz.".format(
+                int(self.streaming_worker.image_count / (streamTime))
+            )
+        )
 
         self.hcam.stopAcquisition()
         self.cameraIsStreaming = False
@@ -1969,13 +2285,17 @@ class CameraUI(QMainWindow):
         self.StreamStatusStackedWidget.setCurrentIndex(2)
 
         if saveFile:
-            self.CamStreamSaving_progressbar.setValue(0) 
+            self.CamStreamSaving_progressbar.setValue(0)
             self.start_save_thread()
 
         self.startOrStopStreamButton.setEnabled(True)
         self.CamStreamActionContainer.setEnabled(True)
         self.StreamStatusStackedWidget.setCurrentIndex(0)
-        self.CamStreamIsFree.setText("Acquisition done. Frames acquired: {}.".format(self.streaming_worker.image_count))
+        self.CamStreamIsFree.setText(
+            "Acquisition done. Frames acquired: {}.".format(
+                self.streaming_worker.image_count
+            )
+        )
 
     def start_save_thread(self):
         self.GetKeyCameraProperties()
@@ -1985,7 +2305,7 @@ class CameraUI(QMainWindow):
             self.streaming_worker.dims,
             self.streaming_worker.image_count,
             self.metaData,
-            self.get_file_dir()
+            self.get_file_dir(),
         )
 
         self.save_worker.moveToThread(self.save_thread)
@@ -2007,11 +2327,12 @@ class CameraUI(QMainWindow):
     def on_save_error(self, error_message):
         logging.warning(f"Error saving file: {error_message}")
 
-    def update_progress_bar(self, value):
-        self.CamStreamSaving_progressbar.setValue(value)
-    
     def SetSavingDirectory(self):
-        self.saving_path = str(QtWidgets.QFileDialog.getExistingDirectory(directory=self.default_folder))
+        self.saving_path = str(
+            QtWidgets.QFileDialog.getExistingDirectory(
+                directory=self.default_folder
+            )
+        )
         self.CamSaving_directory_textbox.setText(self.saving_path)
 
     def update_savedirectory(self, new_directory):
@@ -2019,14 +2340,22 @@ class CameraUI(QMainWindow):
         logging.info(f"Camera save directory updated to: {new_directory}")
 
     def savingPathValid(self, function_name):
-        if not hasattr(self, "saving_path") or self.saving_path.strip() == "" or self.saving_path.strip() == "Saving folder" \
-            or self.CamSaving_filename_textbox.text().strip() == "" or self.CamSaving_filename_textbox.text().strip() == "Tiff file name":
-            
-            QMessageBox.warning(self, f"{function_name}", "Please set the saving path and/or Tiff file name first.")
+        if (
+            not hasattr(self, "saving_path")
+            or self.saving_path.strip() == ""
+            or self.saving_path.strip() == "Saving folder"
+            or self.CamSaving_filename_textbox.text().strip() == ""
+            or self.CamSaving_filename_textbox.text().strip()
+            == "Tiff file name"
+        ):
+            QMessageBox.warning(
+                self,
+                f"{function_name}",
+                "Please set the saving path and/or Tiff file name first.",
+            )
             return False
         else:
             return True
-
 
     def get_file_dir(self):
         return os.path.join(
@@ -2056,22 +2385,26 @@ class CameraUI(QMainWindow):
 
         return thread
 
-
-
     """ Tiff import and analysis functions, added by Nike Celie 8-1-2025 """
 
-    # Function to handle file selection           
+    # Function to handle file selection
     def browseTiffFiles(self):
         # Open a file dialog to select a TIFF file
         options = QFileDialog.Options()
-        tiff_file, _ = QFileDialog.getOpenFileName(self, "Select TIFF file", "", "TIFF Files (*.tif *.tiff)", options=options)
-        
+        tiff_file, _ = QFileDialog.getOpenFileName(
+            self,
+            "Select TIFF file",
+            "",
+            "TIFF Files (*.tif *.tiff)",
+            options=options,
+        )
+
         if tiff_file:
             # Read the TIFF image using skimtiff
             tiff_image = skimtiff.imread(tiff_file)
             self.update_displayed_image(tiff_image)
             self.tiffDirectoryTextbox.setText(tiff_file)
-    
+
     def clearImage(self):
         try:
             # Clear the image from the display
@@ -2088,176 +2421,229 @@ class CameraUI(QMainWindow):
             # Reset any other states (like the stored live image)
             self.Live_image = None
 
-            # Disconnect the mouse click event handler to prevent updates after clearing the image
+            # Disconnect the mouse click event handler to prevent updates
+            # after clearing the image
             if self.mouse_click_connection is not None:
                 try:
-                    self.Live_item.scene().sigMouseClicked.disconnect(self.mouse_click_connection)
+                    self.Live_item.scene().sigMouseClicked.disconnect(
+                        self.mouse_click_connection
+                    )
                 except Exception as e:
-                    print(f"Error disconnecting mouse click event: {e}")
+                    logging.info(f"Error disconnecting mouse click event: {e}")
                 self.mouse_click_connection = None
 
-            print("Image cleared successfully.")
+            logging.info("Image cleared successfully.")
             self.clearImageButton.setEnabled(False)
             self.find_camera_registration_point.setEnabled(False)
             self._set_registration_params(False)
             self._remove_registration_gaussian(remove=True)
 
-
         except Exception as e:
-            print(f"Error clearing image: {e}")
-
+            logging.info(f"Error clearing image: {e}")
 
     def enable_pixel_coordinate_display(self):
         if self.Live_image is None:
-            print("No image loaded for interaction.")
+            logging.info("No image loaded for interaction.")
             return
 
         # Disconnect the previous connection if it exists
         if self.mouse_click_connection is not None:
             try:
-                self.Live_item.scene().sigMouseClicked.disconnect(self.mouse_click_connection)
+                self.Live_item.scene().sigMouseClicked.disconnect(
+                    self.mouse_click_connection
+                )
             except Exception as e:
-                print(f"Error disconnecting mouse click event: {e}")
+                logging.info(f"Error disconnecting mouse click event: {e}")
 
         # Connect the mouse click event to the handler
-        self.mouse_click_connection = self.Live_item.scene().sigMouseClicked.connect(self.handleMouseClick)
-    
+        self.mouse_click_connection = (
+            self.Live_item.scene().sigMouseClicked.connect(
+                self.handleMouseClick
+            )
+        )
+
     def handleMouseClick(self, event):
         if self.Live_image is None:
-            print("No image loaded for interaction.")
+            logging.info("No image loaded for interaction.")
             return
-    
+
         height, width = self.Live_image.shape[:2]
         self.mouseClickedAndValid = False
-    
+
         # Get the mouse click position in scene coordinates
         scene_pos = event.scenePos()
-    
+
         # Map scene coordinates to image pixel coordinates
         image_pos = self.Live_item.mapFromScene(scene_pos)
         self.x_pixel = int(image_pos.x())
         self.y_pixel = int(image_pos.y())
 
-        if hasattr(self, 'ROI_hpos') and hasattr(self, 'ROI_vpos') and self.ROI_hpos is not None and self.ROI_vpos is not None:
-            logging.info(f"Viewbox coordinates: ({self.x_pixel}, {self.y_pixel})")
+        if (
+            hasattr(self, "ROI_hpos")
+            and hasattr(self, "ROI_vpos")
+            and self.ROI_hpos is not None
+            and self.ROI_vpos is not None
+        ):
+            logging.info(
+                f"Viewbox coordinates: ({self.x_pixel}, {self.y_pixel})"
+            )
 
             self.x_pixel += self.ROI_hpos
             self.y_pixel += self.ROI_vpos
 
         self.pixel_intensity = self.Live_image[self.y_pixel, self.x_pixel]
-    
+
         if 0 <= self.x_pixel < width and 0 <= self.y_pixel < height:
             self.x_label.setText(f"X-coordinate: {self.x_pixel}")
             self.y_label.setText(f"Y-coordinate: {self.y_pixel}")
             self.intensity_label.setText(f"Intensity: {self.pixel_intensity}")
             self.mouseClickedAndValid = True
-    
+
             # Trigger point collection if contour creation is active
             if self.createContour:
                 self.addContourPoint()
         else:
-            print("Click is outside the image bounds.")
+            logging.info("Click is outside the image bounds.")
 
-            
     def createCustomContour(self):
         self.createContour = True
-        self.userInputContourPoints = np.zeros((2, self.contourSize), dtype=int)  
-        self.current_index = 0  
+        self.userInputContourPoints = np.zeros(
+            (2, self.contourSize), dtype=int
+        )
+        self.current_index = 0
         self.contourCreationButton.setEnabled(False)
         self.contourCreationProgress.setVisible(True)
-        print(f"Contour creation started. Collect {self.contourSize} points.")
+        logging.info(
+            f"Contour creation started. Collect {self.contourSize} points."
+        )
         self.contourCreationProgress.setText("Waiting on user input.")
-    
+
     def addContourPoint(self):
-        if self.mouseClickedAndValid and self.createContour and self.current_index < self.contourSize:
+        if (
+            self.mouseClickedAndValid
+            and self.createContour
+            and self.current_index < self.contourSize
+        ):
             # Add the clicked point to the contour
-            self.userInputContourPoints[:, self.current_index] = [self.x_pixel, self.y_pixel]
+            self.userInputContourPoints[:, self.current_index] = [
+                self.x_pixel,
+                self.y_pixel,
+            ]
             self.current_index += 1
             self.x_label.setText(f"X-coordinate: {self.x_pixel}")
             self.y_label.setText(f"Y-coordinate: {self.y_pixel}")
-            self.contourCreationProgress.setText(f"Point {self.current_index}/{self.contourSize} added: ({self.x_pixel}, {self.y_pixel})")
-            
+            self.contourCreationProgress.setText(
+                f"Point {self.current_index}/{self.contourSize} added: "
+                f"({self.x_pixel}, {self.y_pixel})"
+            )
+
             # Update the ROI contour dynamically
             self.drawROIContour()
-        
+
             # Check if all points are collected
             if self.current_index == self.contourSize:
-                print("All contour points collected.")
+                logging.info("All contour points collected.")
                 self.onContourComplete()
-   
-    
+
     def drawROIContour(self):
         # Use only the collected points to draw the contour
-        collected_points = self.userInputContourPoints[:, :self.current_index].T
-        print(collected_points)
+        collected_points = self.userInputContourPoints[
+            :, : self.current_index
+        ].T
+        logging.info(collected_points)
         self.previous_positions = collected_points
-    
+
         # Remove existing contour if it exists
-        if hasattr(self, 'ROIContour') and self.ROIContour in self.view_box.addedItems:
+        if (
+            hasattr(self, "ROIContour")
+            and self.ROIContour in self.view_box.addedItems
+        ):
             self.view_box.removeItem(self.ROIContour)
-    
+
         # Create the PolyLineROI for the contour
-        self.ROIContour = pg.PolyLineROI(collected_points, closed=True, movable=True)
-    
+        self.ROIContour = pg.PolyLineROI(
+            collected_points, closed=True, movable=True
+        )
+
         # Add names to the handles
         for i, handle in enumerate(self.ROIContour.handles):
-            handle['name'] = f"Point {i + 1}"
-    
+            handle["name"] = f"Point {i + 1}"
+
         self.initializeROIContour()
-        
+
     def onHandleMoved(self):
         ROIHandlePositions = self.ROIContour.getLocalHandlePositions()
-        current_positions = np.array([ [np.round(pos[1].x(), 0), np.round(pos[1].y(), 0)] for pos in ROIHandlePositions])
-        
+        current_positions = np.array(
+            [
+                [np.round(pos[1].x(), 0), np.round(pos[1].y(), 0)]
+                for pos in ROIHandlePositions
+            ]
+        )
+
         # Track changes in real-time or finalized movement
-        for i, (prev, curr) in enumerate(zip(self.previous_positions, current_positions)):
-            if not np.allclose(prev, curr):  # Check if the position has changed
+        for i, (prev, curr) in enumerate(
+            zip(self.previous_positions, current_positions)
+        ):
+            if not np.allclose(
+                prev, curr
+            ):  # Check if the position has changed
                 if self.is_final_update:
-                    print(f"Point {i+1} finalized at {curr}")
-                    self.contourCreationProgress.setText(f"Point {i+1} moved to {curr}")
+                    logging.info(f"Point {i+1} finalized at {curr}")
+                    self.contourCreationProgress.setText(
+                        f"Point {i+1} moved to {curr}"
+                    )
                 else:
-                    self.contourCreationProgress.setText(f"Moving Point {i+1} {curr}")
-        
+                    self.contourCreationProgress.setText(
+                        f"Moving Point {i+1} {curr}"
+                    )
+
         # Update the stored positions if movement is finalized
         if self.is_final_update:
             self.previous_positions = np.copy(current_positions)
-    
+
     def initializeROIContour(self):
-        self.is_final_update = False  # Flag to differentiate between live and final updates
+        self.is_final_update = (
+            False  # Flag to differentiate between live and final updates
+        )
         self.ROIContour.sigRegionChanged.connect(self.trackLiveUpdates)
         self.ROIContour.sigRegionChangeFinished.connect(self.finalizeUpdates)
         self.view_box.addItem(self.ROIContour)
-    
+
     def trackLiveUpdates(self):
         self.is_final_update = False
         self.onHandleMoved()
-    
+
     def finalizeUpdates(self):
         self.is_final_update = True
         self.onHandleMoved()
 
-        
     def checkContourSizeInput(self):
-        user_input = self.contourSizeInput.text().strip()  
+        user_input = self.contourSizeInput.text().strip()
         inputIsValid = False
         self.contourCreationProgress.setVisible(False)
-        self.saveContourButton.setVisible(False)        
-        
+        self.saveContourButton.setVisible(False)
+
         try:
-            if not user_input: 
+            if not user_input:
                 inputIsValid = False
                 self.contourCreationButton.setEnabled(False)
-                return  
-            
+                return
+
             self.contourSize = int(user_input)
-            
+
             if self.contourSize < 3:
-                # QMessageBox.warning(self, "Error", "Please enter a positive integer greater than 2.")
+                # QMessageBox.warning(self, "Error", "Please enter a positive
+                # integer greater than 2.")
                 inputIsValid = False
             else:
                 inputIsValid = True
         except ValueError:
-            QMessageBox.warning(self, "Error", "Invalid input! Please enter a positive integer greater than 2.")
+            QMessageBox.warning(
+                self,
+                "Error",
+                "Invalid input! Please enter a positive integer greater than "
+                "2.",
+            )
             inputIsValid = False
 
         if inputIsValid:
@@ -2267,66 +2653,92 @@ class CameraUI(QMainWindow):
 
     def checkContourIntensityInput(self):
         user_input = self.contourIntensityInput.text().strip()
-        self.lower_intensity_bound, self.upper_intensity_bound = self.image_analyzer.determine_thresholds(self.Live_image)
+        self.lower_intensity_bound, self.upper_intensity_bound = (
+            self.image_analyzer.determine_thresholds(self.Live_image)
+        )
 
         try:
             if not user_input:
                 self.contourGenerationButton.setEnabled(False)
                 return
-                 
+
             self.contour_intensity_input_value = int(user_input)
 
-            if (self.lower_intensity_bound < self.contour_intensity_input_value) and (self.contour_intensity_input_value < self.upper_intensity_bound):
+            if (
+                self.lower_intensity_bound < self.contour_intensity_input_value
+            ) and (
+                self.contour_intensity_input_value < self.upper_intensity_bound
+            ):
                 self.contourGenerationButton.setEnabled(True)
             else:
                 self.contourGenerationButton.setEnabled(False)
                 return
         except ValueError:
             self.contourGenerationButton.setEnabled(False)
-            QMessageBox.warning(self, "Error", "Invalid input! Please enter a valid intensity value.")
+            QMessageBox.warning(
+                self,
+                "Error",
+                "Invalid input! Please enter a valid intensity value.",
+            )
             return
-            
+
     def generateContour(self, zoom_in_on_roi=False):
-        self.generated_contour = self.image_analyzer.find_contour(self.Live_image, self.contour_intensity_input_value, num_points=500)
-        
+        self.generated_contour = self.image_analyzer.find_contour(
+            self.Live_image, self.contour_intensity_input_value, num_points=500
+        )
+
         if zoom_in_on_roi:
-            roi_generated_contour = self.image_analyzer.zoom_in_on_roi(None, self.generated_contour, factor = 2)
+            roi_generated_contour = self.image_analyzer.zoom_in_on_roi(
+                None, self.generated_contour, factor=2
+            )
 
             # Set the limit parameters for the view box
             x_min, x_max = roi_generated_contour[0]
             x_min, x_max = np.clip([x_min, x_max], 0, self.Live_image.shape[1])
             y_min, y_max = roi_generated_contour[1]
             y_min, y_max = np.clip([y_min, y_max], 0, self.Live_image.shape[0])
-        
+
             # Set the limits for the view box
-            self.view_box.setLimits(xMin=x_min, xMax=x_max, yMin=y_min, yMax=y_max)
-            
+            self.view_box.setLimits(
+                xMin=x_min, xMax=x_max, yMin=y_min, yMax=y_max
+            )
+
             # Set the range to update the view box to the new limits
-            self.view_box.setRange(xRange=(x_min, x_max), yRange=(y_min, y_max), padding=0)
+            self.view_box.setRange(
+                xRange=(x_min, x_max), yRange=(y_min, y_max), padding=0
+            )
 
         # Reset the sliders
         self.contourSizeSlider.setValue(int(1.0 * 100))
         self.contourSmoothnessSlider.setValue(0)
-        minimum_intensity = max(self.lower_intensity_bound, self.contour_intensity_input_value*0.7)
-        maximum_intensity = min(self.upper_intensity_bound, self.contour_intensity_input_value*1.3)
+        minimum_intensity = max(
+            self.lower_intensity_bound,
+            self.contour_intensity_input_value * 0.7,
+        )
+        maximum_intensity = min(
+            self.upper_intensity_bound,
+            self.contour_intensity_input_value * 1.3,
+        )
         self.contourIntensitySlider.setMinimum(int(minimum_intensity))
-        self.contourIntensitySlider.setMaximum(int(maximum_intensity)) 
-        self.contourIntensitySlider.setValue(self.contour_intensity_input_value)
+        self.contourIntensitySlider.setMaximum(int(maximum_intensity))
+        self.contourIntensitySlider.setValue(
+            self.contour_intensity_input_value
+        )
 
         # Plot the contour over the live image
         self.plotContour(self.generated_contour)
-    
+
     def plotContour(self, contour):
         # Remove any existing contour plot
-        if hasattr(self, 'contour_plot') and self.contour_plot is not None:
+        if hasattr(self, "contour_plot") and self.contour_plot is not None:
             self.view_box.removeItem(self.contour_plot)
 
         # Extract the x and y coordinates of the contour
         contour_x = contour[:, 1]
         contour_y = contour[:, 0]
-        
+
         # Plot the contour over the live image
-        self.contour_plot = pg.PlotDataItem(contour_x, contour_y, pen='r')
+        self.contour_plot = pg.PlotDataItem(contour_x, contour_y, pen="r")
         self.view_box.addItem(self.contour_plot)
 
         self.removeGeneratedContourButton.setVisible(True)
@@ -2334,76 +2746,119 @@ class CameraUI(QMainWindow):
         self.saveContourButton.setVisible(True)
 
     def removeGeneratedContour(self):
-        if hasattr(self, 'contour_plot') and self.contour_plot is not None:
+        if hasattr(self, "contour_plot") and self.contour_plot is not None:
             self.view_box.removeItem(self.contour_plot)
             self.contour_plot = None
 
         self.removeGeneratedContourButton.setVisible(False)
-        self.contourIntensityInput.setPlaceholderText("Define intensity threshold")
+        self.contourIntensityInput.setPlaceholderText(
+            "Define intensity threshold"
+        )
         self._setGeneratedContourWidgets(False)
         self.saveContourButton.setVisible(False)
         self.contourCreationProgress.setVisible(False)
-        
+
     def updateGeneratedContour(self):
-        intensity, size, smoothness = int(self.contourIntensitySlider.value()), self.contourSizeSlider.value()/100, self.contourSmoothnessSlider.value()
+        intensity, size, smoothness = (
+            int(self.contourIntensitySlider.value()),
+            self.contourSizeSlider.value() / 100,
+            self.contourSmoothnessSlider.value(),
+        )
         self._setGeneratedContourWidgets(True, intensity, size, smoothness)
-        intensity_contour = self.image_analyzer.find_contour(self.Live_image, intensity, num_points=500)
-        size_contour = self.image_analyzer.resize_contour(intensity_contour, size)
-        smoothness_contour = self.image_analyzer.smoothen_contour(size_contour, smoothness)
+        intensity_contour = self.image_analyzer.find_contour(
+            self.Live_image, intensity, num_points=500
+        )
+        size_contour = self.image_analyzer.resize_contour(
+            intensity_contour, size
+        )
+        smoothness_contour = self.image_analyzer.smoothen_contour(
+            size_contour, smoothness
+        )
 
         self.final_contour = smoothness_contour
         self.plotContour(self.final_contour)
-       
 
     def onContourComplete(self):
-        print("Contour creation complete.")
+        logging.info("Contour creation complete.")
         self.createContour = False
-        self.ROIContour.setPen('g')
+        self.ROIContour.setPen("g")
         self.saveContourButton.setVisible(True)
-        
+
         # Get the final contour points from the ROIContour handles
         ROIHandlePositions = self.ROIContour.getLocalHandlePositions()
-        final_contour = np.array([ [np.round(pos[1].x(), 0), np.round(pos[1].y(), 0)] for pos in ROIHandlePositions])
-        print("ROI positions:", final_contour)
+        final_contour = np.array(
+            [
+                [np.round(pos[1].x(), 0), np.round(pos[1].y(), 0)]
+                for pos in ROIHandlePositions
+            ]
+        )
+        logging.info("ROI positions:", final_contour)
+
         # Interpolate the final contour points
         def interpolate_points(p1, p2, num_points):
             x_values = np.linspace(p1[0], p2[0], num_points)
             y_values = np.linspace(p1[1], p2[1], num_points)
             return np.vstack((x_values, y_values)).T
-    
+
         num_points_between_vertices = 200
         interpolated_contour = []
         for i in range(len(final_contour)):
             p1 = final_contour[i]
-            p2 = final_contour[(i + 1) % len(final_contour)]  # Wrap around to the first vertex
-            interpolated_points = interpolate_points(p1, p2, num_points_between_vertices)
+            p2 = final_contour[
+                (i + 1) % len(final_contour)
+            ]  # Wrap around to the first vertex
+            interpolated_points = interpolate_points(
+                p1, p2, num_points_between_vertices
+            )
             interpolated_contour.extend(interpolated_points)
-    
+
         # Set self.final_contour to the interpolated contour
         self.final_contour_drawn = np.array(interpolated_contour)
-        
 
     def saveCustomContour(self):
-
-        # Create an instance of the CameraPmtMapping class and readout calibration parameters
+        # Create an instance of the CameraPmtMapping class and readout
+        # calibration parameters
         self.camera_pmt_mapping = CameraPmtMapping()
-        cam_vertices, pmt_vertices = self.registrationPoints.camera_vertices, self.registrationPoints.pmt_vertices
+        cam_vertices, pmt_vertices = (
+            self.registrationPoints.camera_vertices,
+            self.registrationPoints.pmt_vertices,
+        )
 
-        untransformedContour = self.final_contour 
+        untransformedContour = self.final_contour
 
         x = untransformedContour[:, 1]
         y = untransformedContour[:, 0]
 
-        untransformedContour = np.vstack((x,y)).T
-        # if hasattr(self, 'ROI_hpos') and hasattr(self, 'ROI_vpos') and self.ROI_hpos is not None and self.ROI_vpos is not None:
-        #     logging.info("Adding ROI offsets to the untransformed contour.")
-        #     x_coords_with_roi = [c[0] + self.ROI_hpos for c in untransformedContour]
-        #     y_coords_with_roi = [c[1] + self.ROI_vpos for c in untransformedContour]
-        #     untransformedContour = np.vstack((x_coords_with_roi, y_coords_with_roi)).T
-        
+        untransformedContour = np.vstack((x, y)).T
+        if False:
+            if (
+                hasattr(self, "ROI_hpos")
+                and hasattr(self, "ROI_vpos")
+                and self.ROI_hpos is not None
+                and self.ROI_vpos is not None
+            ):
+                logging.info(
+                    "Adding ROI offsets to the untransformed contour."
+                )
+                x_coords_with_roi = [
+                    c[0] + self.ROI_hpos for c in untransformedContour
+                ]
+                y_coords_with_roi = [
+                    c[1] + self.ROI_vpos for c in untransformedContour
+                ]
+                untransformedContour = np.vstack(
+                    (x_coords_with_roi, y_coords_with_roi)
+                ).T
+
         # Create affine matrix and transform the final contour
-        affine_matrix = self.camera_pmt_mapping.create_affine_transformation_matrix(cam_vertices, pmt_vertices)
-        transformedContour = self.camera_pmt_mapping.transform_contour(untransformedContour, affine_matrix)
+        affine_matrix = (
+            self.camera_pmt_mapping.create_affine_transformation_matrix(
+                cam_vertices, pmt_vertices
+            )
+        )
+        transformedContour = self.camera_pmt_mapping.transform_contour(
+            untransformedContour, affine_matrix
+        )
 
         # Set widgets
         self.contourCreationProgress.setVisible(True)
@@ -2412,14 +2867,21 @@ class CameraUI(QMainWindow):
         # Emit the signal with the transformed contour
         self.output_signal_camera_pmt_contour.emit(transformedContour)
 
-    def _setGeneratedContourWidgets(self, visible, intensity = None, size = None, smoothness = None):
+    def _setGeneratedContourWidgets(
+        self, visible, intensity=None, size=None, smoothness=None
+    ):
         self.contourIntensityLabel.setVisible(visible)
         self.contourIntensitySlider.setVisible(visible)
         self.contourSizeLabel.setVisible(visible)
         self.contourSizeSlider.setVisible(visible)
         self.contourSmoothnessLabel.setVisible(visible)
         self.contourSmoothnessSlider.setVisible(visible)
-        if visible and (intensity != None) and (size != None) and (smoothness != None):
+        if (
+            visible
+            and (intensity is not None)
+            and (size is not None)
+            and (smoothness is not None)
+        ):
             self.contourIntensityLabel.setText(f"Intensity: {intensity}")
             self.contourSizeLabel.setText(f"Size: {size}")
             self.contourSmoothnessLabel.setText(f"Smoothness: {smoothness}")
@@ -2431,79 +2893,107 @@ class CameraUI(QMainWindow):
         self.registration_x_coord_pmt_value.setText(str(x))
         self.registration_x_coord_pmt_value.setEnabled(True)
         self.registration_y_coord_pmt_value.setText(str(y))
-        self.registration_y_coord_pmt_value.setEnabled(True)       
-        self.find_camera_registration_point.setEnabled(True) 
+        self.registration_y_coord_pmt_value.setEnabled(True)
+        self.find_camera_registration_point.setEnabled(True)
 
     def fit_gaussian_over_camera_img(self):
         if self.cameraIsLive or self.cameraIsStreaming:
-            logging.warning("Please stop the live or stream. A fixed image is required for the registration.")
+            logging.warning(
+                "Please stop the live or stream. A fixed image is required "
+                "for the registration."
+            )
             return
-    
-        if hasattr(self, 'Live_image') and self.Live_image is not None:
+
+        if hasattr(self, "Live_image") and self.Live_image is not None:
             self._set_registration_params(True)
         else:
-            logging.warning("No live image available. Please make sure a snapshot of the registration image is presented.")
+            logging.warning(
+                "No live image available. Please make sure a snapshot of the "
+                "registration image is presented."
+            )
 
     def _set_registration_params(self, set_params):
-            
-            def set_value(param, value, enabled):
-                if enabled:
-                    param.setText(str(int(value)))
-                    param.setEnabled(enabled)
-                else: 
-                    param.clear()
-                    param.setEnabled(enabled)
 
-            if not set_params:
-                amplitude, xo, yo, sigma_x, sigma_y, offset = [], [], [], [], [], []
-                set_value(self.registration_x_coord_pmt_value, [], set_params)
-                set_value(self.registration_y_coord_pmt_value, [], set_params)
+        def set_value(param, value, enabled):
+            if enabled:
+                param.setText(str(int(value)))
+                param.setEnabled(enabled)
             else:
-                amplitude, xo, yo, sigma_x, sigma_y, offset = self.camera_pmt_registration.fitDoubleGaussian(self.Live_image)
-                registration_params = amplitude, xo, yo, sigma_x, sigma_y, offset
-                self._plot_registration_gaussian(registration_params)
+                param.clear()
+                param.setEnabled(enabled)
 
-            set_value(self.amplitude_value, amplitude, set_params)
-            set_value(self.registration_x_coord_camera_value, xo, set_params)
-            set_value(self.registration_y_coord_camera_value, yo, set_params)
-            set_value(self.sigma_x_value, sigma_x, set_params)
-            set_value(self.sigma_y_value, sigma_y, set_params)
-            set_value(self.camera_offset_value, offset, set_params)
-       
+        if not set_params:
+            amplitude, xo, yo, sigma_x, sigma_y, offset = (
+                [],
+                [],
+                [],
+                [],
+                [],
+                [],
+            )
+            set_value(self.registration_x_coord_pmt_value, [], set_params)
+            set_value(self.registration_y_coord_pmt_value, [], set_params)
+        else:
+            amplitude, xo, yo, sigma_x, sigma_y, offset = (
+                self.camera_pmt_registration.fitDoubleGaussian(self.Live_image)
+            )
+            registration_params = amplitude, xo, yo, sigma_x, sigma_y, offset
+            self._plot_registration_gaussian(registration_params)
+
+        set_value(self.amplitude_value, amplitude, set_params)
+        set_value(self.registration_x_coord_camera_value, xo, set_params)
+        set_value(self.registration_y_coord_camera_value, yo, set_params)
+        set_value(self.sigma_x_value, sigma_x, set_params)
+        set_value(self.sigma_y_value, sigma_y, set_params)
+        set_value(self.camera_offset_value, offset, set_params)
+
     def _plot_registration_gaussian(self, registration_params):
         amplitude, xo, yo, sigma_x, sigma_y, offset = registration_params
 
         # Generate a grid of x and y values
-        x = np.linspace(0, self.Live_image.shape[1] - 1, self.Live_image.shape[1])
-        y = np.linspace(0, self.Live_image.shape[0] - 1, self.Live_image.shape[0])
+        x = np.linspace(
+            0, self.Live_image.shape[1] - 1, self.Live_image.shape[1]
+        )
+        y = np.linspace(
+            0, self.Live_image.shape[0] - 1, self.Live_image.shape[0]
+        )
         x, y = np.meshgrid(x, y)
 
         # Define the 2D Gaussian function
         def gaussian(x, y, amplitude, xo, yo, sigma_x, sigma_y, offset):
-            return offset + amplitude * np.exp(-(((x - xo) ** 2) / (2 * sigma_x ** 2) + ((y - yo) ** 2) / (2 * sigma_y ** 2)))
+            return offset + amplitude * np.exp(
+                -(
+                    ((x - xo) ** 2) / (2 * sigma_x**2)
+                    + ((y - yo) ** 2) / (2 * sigma_y**2)
+                )
+            )
 
         # Generate the Gaussian data
-        gaussian_data = gaussian(x, y, amplitude, xo, yo, sigma_x, sigma_y, offset)
+        gaussian_data = gaussian(
+            x, y, amplitude, xo, yo, sigma_x, sigma_y, offset
+        )
 
         # Add the registration contour plot to visualize the Gaussian fit
-        self.registration_contour = pg.IsocurveItem(level=amplitude / 2, pen='r')
+        self.registration_contour = pg.IsocurveItem(
+            level=amplitude / 2, pen="r"
+        )
         self.registration_contour.setOpacity(0.75)
         self.registration_contour.setData(gaussian_data)
         self.Live_view.addItem(self.registration_contour)
 
         # Add a cross at the center of the Gaussian
-        self.registration_cross = pg.ScatterPlotItem([xo], [yo], symbol='+', size=20, pen=pg.mkPen('r', width=2))
+        self.registration_cross = pg.ScatterPlotItem(
+            [xo], [yo], symbol="+", size=20, pen=pg.mkPen("r", width=2)
+        )
         self.Live_view.addItem(self.registration_cross)
 
         self.registration_gaussian_plotted = True
 
-    def _remove_registration_gaussian(self, remove = False):
+    def _remove_registration_gaussian(self, remove=False):
         if remove:
             self.Live_view.removeItem(self.registration_contour)
             self.Live_view.removeItem(self.registration_cross)
             self.registration_gaussian_plotted = False
-
-
 
 
 class StreamingWorker(QObject):
@@ -2513,7 +3003,9 @@ class StreamingWorker(QObject):
     error = pyqtSignal(str)
     streaming_finished = pyqtSignal()
 
-    def __init__(self, hcam, stop_signal, buffer_number, stream_duration, parent=None):
+    def __init__(
+        self, hcam, stop_signal, buffer_number, stream_duration, parent=None
+    ):
         super().__init__(parent)
         self.hcam = hcam
         self.stop_signal = stop_signal
@@ -2527,7 +3019,11 @@ class StreamingWorker(QObject):
     def run(self):
         try:
             self.camera_is_streaming = True
-            self.hcam.setACQMode("fixed_length", number_frames=self.buffer_number, additional_buffer_factor=1.0)
+            self.hcam.setACQMode(
+                "fixed_length",
+                number_frames=self.buffer_number,
+                additional_buffer_factor=1.0,
+            )
             self.hcam.startAcquisition()
 
             if self.stop_signal == "Time":
@@ -2538,28 +3034,34 @@ class StreamingWorker(QObject):
                         self.dims = dims
                         self.video_list.append(frames[0].np_array)
                         self.image_count += 1
-                        self.update_label.emit(f"Recording, {self.image_count} frames..")
+                        self.update_label.emit(
+                            f"Recording, {self.image_count} frames.."
+                        )
                         start_time = time.time()
                         break
                     time.sleep(0.01)  # Sleep briefly to avoid busy-waiting
-            
+
                 while time.time() - start_time < self.stream_duration:
                     frames, dims = self.hcam.getFrames()
-                    self.dims = dims  
+                    self.dims = dims
                     for aframe in frames:
                         self.video_list.append(aframe.np_array)
                         self.image_count += 1
-                        self.update_label.emit(f"Recording, {self.image_count} frames..")
+                        self.update_label.emit(
+                            f"Recording, {self.image_count} frames.."
+                        )
                 self.stop_streaming()
 
             elif self.stop_signal == "Frames":
                 for _ in range(self.buffer_number):
                     frames, dims = self.hcam.getFrames()
-                    self.dims = dims  
+                    self.dims = dims
                     for aframe in frames:
                         self.video_list.append(aframe.np_array)
                         self.image_count += 1
-                        self.update_label.emit(f"Recording, {self.image_count} frames..")
+                        self.update_label.emit(
+                            f"Recording, {self.image_count} frames.."
+                        )
                 self.stop_streaming()
         except Exception as e:
             self.error.emit(str(e))
@@ -2595,7 +3097,9 @@ class LiveWorker(QObject):
             try:
                 frames, dims = self.hcam.getFrames()
                 if frames:
-                    live_image = np.resize(frames[-1].np_array, (dims[1], dims[0]))
+                    live_image = np.resize(
+                        frames[-1].np_array, (dims[1], dims[0])
+                    )
                     self.update_image.emit(live_image)
                     logging.debug(f"Frame acquired: {live_image.shape}")
                 else:
@@ -2634,15 +3138,18 @@ class LiveWorker(QObject):
             self.snapping = False
             self.finished.emit()
 
+
 class SaveWorker(QObject):
     finished = pyqtSignal()
     error = pyqtSignal(str)
     update_progress = pyqtSignal(int)
 
-    def __init__(self, video_list, dims, image_count, metaData, file_dir, parent=None):
+    def __init__(
+        self, video_list, dims, image_count, metaData, file_dir, parent=None
+    ):
         super().__init__(parent)
-        self.video_list = video_list  
-        self.dims = dims 
+        self.video_list = video_list
+        self.dims = dims
         self.image_count = image_count
         self.metaData = metaData
         self.file_dir = file_dir
@@ -2654,38 +3161,50 @@ class SaveWorker(QObject):
 
             write_starttime = time.time()
 
-            with skimtiff.TiffWriter(self.file_dir, append=True, imagej=False) as tif:
+            with skimtiff.TiffWriter(
+                self.file_dir, append=True, imagej=False
+            ) as tif:
                 for i in range(0, self.image_count, batch_size):
-                    batch_frames = self.video_list[i:i + batch_size]
+                    batch_frames = self.video_list[i : i + batch_size]
 
-                    images = np.array([np.resize(frame, (self.dims[1], self.dims[0])) for frame in batch_frames])
-                    tif.write(images, description=self.metaData, photometric='minisblack')
-                    
+                    images = np.array(
+                        [
+                            np.resize(frame, (self.dims[1], self.dims[0]))
+                            for frame in batch_frames
+                        ]
+                    )
+                    tif.write(
+                        images,
+                        description=self.metaData,
+                        photometric="minisblack",
+                    )
+
                     progress = int((i + batch_size) / self.image_count * 100)
                     self.update_progress.emit(progress)
 
-            logging.info(f"Done writing frames. Total time: {round(time.time() - write_starttime, 2)} sec.")
+            totaltime = round(time.time() - write_starttime, 2)
+            logging.info(f"Done writing frames. Total time: {totaltime} sec.")
             self.finished.emit()
-        
+
         except Exception as e:
             logging.error(f"Error during save operation: {e}")
             self.error.emit(str(e))
+
 
 if __name__ == "__main__":
     import GalvoWidget.PMTWidget
     import NIDAQ.WaveformWidget
 
-
     def run_app(pmt_widget_ui=None, waveform_widget_ui=None):
         app = QtWidgets.QApplication(sys.argv)
         QtWidgets.QApplication.setStyle(QStyleFactory.create("Fusion"))
-        
+
         if pmt_widget_ui is None:
             pmt_widget_ui = GalvoWidget.PMTWidget.PMTWidgetUI()
 
         if waveform_widget_ui is None:
             waveform_widget_ui = NIDAQ.WaveformWidget.WaveformGenerator()
-        
+
         mainwin = CameraUI(pmt_widget_ui, waveform_widget_ui)
         mainwin.show()
         app.exec_()

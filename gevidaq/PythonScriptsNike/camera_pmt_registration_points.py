@@ -1,8 +1,13 @@
-# Uncomment first import line when running Fiumicino, uncomment the second line when running camera_pmt_mapping
+# Uncomment first import line when running Fiumicino, uncomment the second line
+# when running camera_pmt_mapping
 # from PythonScriptsNike.camera_pmt_mapping import CameraPmtMapping
 from .camera_pmt_mapping import CameraPmtMapping
 
-"""Make sure to always perform a new refistration as soon as the hardware has changed or moved!"""
+CameraPmtMapping
+# Make sure to always perform a new registration as soon as the hardware has
+# changed or moved!
+
+
 class CameraPmtRegistrationPoints:
     def __init__(self):
 
@@ -16,4 +21,3 @@ class CameraPmtRegistrationPoints:
         elif registration_25_2_1st:
             self.pmt_vertices = [(0, 0), (250, 500), (500, 100)]
             self.camera_vertices = [(1422, 1643), (570, 1210), (1256, 769)]
-
