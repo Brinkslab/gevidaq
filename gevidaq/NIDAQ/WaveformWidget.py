@@ -103,6 +103,7 @@ class WaveformGenerator(QWidget):
             "532AO",
             "488AO",
             "patchAO",
+            "fieldstimulator",
         ]
         self.DigitalChannelList = [
             "cameratrigger",
@@ -118,6 +119,9 @@ class WaveformGenerator(QWidget):
             "Perfusion_6",
             "Perfusion_2",
             "2Pshutter",
+            "532 servo",
+            '640 servo',
+            '488 servo',            
         ]
 
         self.color_dictionary = {
@@ -129,6 +133,7 @@ class WaveformGenerator(QWidget):
             "488AO": [0, 0, 255],
             "532AO": [0, 255, 0],
             "patchAO": [100, 100, 0],
+            "fieldstimulator": [255,0,255],
             "cameratrigger": [0, 255, 255],
             "galvotrigger": [100, 100, 200],
             "blankingall": [255, 229, 204],
@@ -142,10 +147,15 @@ class WaveformGenerator(QWidget):
             "Perfusion_2": [255, 215, 0],
             "2Pshutter": [229, 204, 255],
             "DMD_trigger": [255, 215, 0],
+            "532 servo": [0, 200, 0],
+            '640 servo': [200, 0, 0],
+            '488 servo': [0, 0, 200],
         }
 
         self.PlotDataItem_dict = {}
         self.waveform_data_dict = {}
+        
+        self.servo_dict = {}
 
         self.setMinimumSize(1000, 650)
         self.setWindowTitle("Buon appetito!")
@@ -1079,11 +1089,24 @@ class WaveformGenerator(QWidget):
             rectified_waveform = np.zeros(
                 len(self.waveform_data_dict[channel_keyword]), dtype=bool
             )
-            self.generate_graphy(channel_keyword, rectified_waveform)
+        elif 'servo' in channel_keyword:
+            if channel_keyword in self.servo_dict and self.Append_Mode:
+                servo_rectified_waveform = 5*np.ones(len(waveform_to_add), dtype=bool)
+                servo_rectified_waveform[:int(self.uiDaq_sample_rate*self.uiwaveoffset_digital_waveform/1000)] = 0
+                self.servo_dict[channel_keyword]['rectified_waveform'] = np.append(self.servo_dict[channel_keyword]['rectified_waveform'], servo_rectified_waveform)
+            else:
+                self.servo_dict[channel_keyword] = {
+                    'offset': self.uiwaveoffset_digital_waveform,
+                    'duration': self.uiwaveperiod_digital_waveform
+                }
+                servo_rectified_waveform = 5*np.ones(len(waveform_to_add), dtype=bool)
+                servo_rectified_waveform[:int(self.uiDaq_sample_rate*self.uiwaveoffset_digital_waveform/1000)] = 0
+                self.servo_dict[channel_keyword]['rectified_waveform'] = servo_rectified_waveform
+            rectified_waveform = self.servo_dict[channel_keyword]['rectified_waveform']
         else:
-            self.generate_graphy(
-                channel_keyword, self.waveform_data_dict[channel_keyword]
-            )
+            rectified_waveform = self.waveform_data_dict[channel_keyword]
+        self.generate_graphy(channel_keyword, rectified_waveform)
+
 
     def del_waveform_digital(self):
         channel_keyword = self.Digital_channel_combox.currentText()
@@ -1092,7 +1115,19 @@ class WaveformGenerator(QWidget):
 
         del self.PlotDataItem_dict[channel_keyword]
         del self.waveform_data_dict[channel_keyword]
+        del self.servo_dict[channel_keyword]
 
+    def handle_stream_parameters(self, params):
+        desired_fps = params['desired_fps']
+        total_time_s = params['total_time']
+        total_time_ms = total_time_s * 1000
+        print(f"Received stream parameters: desired_fps={desired_fps}, total_time={total_time_ms} ms.")
+
+        self.Digital_channel_combox.setCurrentText("cameratrigger")
+        self.DigFreqTextbox.setText(str(desired_fps))
+        self.DigDurationTextbox.setText(str(total_time_ms))
+        
+        
     def setExtraTriggerFlag(self):
         # Add extra 4 samples of one camera trigger or not
         if self.switchExtraTrigger.isChecked():
@@ -1503,15 +1538,31 @@ class WaveformGenerator(QWidget):
         else:
             self.uiwavegap_digital_waveform = int(self.DigGapTextbox.text())
 
-        digital_waveform = generate_digital_waveform(
+        # if int(self.textbox11A.currentText()) == 1:
+        if 'servo' in channel:
+            print('servo')
+            digital_waveform = generate_digital_waveform(
             self.uiDaq_sample_rate,
-            self.uiwavefrequency_digital_waveform,
+            50,
             self.uiwaveoffset_digital_waveform,
             self.uiwaveperiod_digital_waveform,
-            self.uiwaveDC_digital_waveform,
+            min(self.uiwaveDC_digital_waveform, 10),
             self.uiwaverepeat_digital_waveform_number,
             self.uiwavegap_digital_waveform,
+            True,
         )
+        else:
+            print('no servo')
+            digital_waveform = generate_digital_waveform(
+                self.uiDaq_sample_rate,
+                self.uiwavefrequency_digital_waveform,
+                self.uiwaveoffset_digital_waveform,
+                self.uiwaveperiod_digital_waveform,
+                self.uiwaveDC_digital_waveform,
+                self.uiwaverepeat_digital_waveform_number,
+                self.uiwavegap_digital_waveform,
+                False
+            )
 
         return digital_waveform.generate()
 
@@ -1644,7 +1695,12 @@ class WaveformGenerator(QWidget):
             waveform = waveform.astype(int)
 
         x_label = np.arange(len(waveform)) / self.uiDaq_sample_rate
-        current_PlotDataItem = PlotDataItem(x_label, waveform, name=channel)
+        if 'servo' in channel:
+            # if showing servo -> zero for offset
+            current_PlotDataItem = PlotDataItem(x_label, waveform, name=channel)
+
+        else:
+            current_PlotDataItem = PlotDataItem(x_label, waveform, name=channel)
         current_PlotDataItem.setPen(self.color_dictionary[channel])
 
         if self.Append_Mode is True:
@@ -1663,6 +1719,7 @@ class WaveformGenerator(QWidget):
         self.pw.clear()
         self.PlotDataItem_dict = {}
         self.waveform_data_dict = {}
+        self.servo_dict = {}
 
     def organize_waveforms(self):
         """
@@ -1957,54 +2014,34 @@ class WaveformGenerator(QWidget):
         x_label = np.arange(self.reference_length) / self.uiDaq_sample_rate
 
         for waveform_key in self.waveform_data_dict:
-            #
-            if self.waveform_data_dict[waveform_key].dtype == "float64":
-                # In case of galvos re-drawing
-                if "galvos_contour" in waveform_key:
-                    self.PlotDataItem_dict["galvos_contour"].setData(
-                        x_label,
-                        self.waveform_data_dict[waveform_key],
-                        name=waveform_key,
-                    )
-                elif "galvosx" in waveform_key or "galvosy" in waveform_key:
-                    self.PlotDataItem_dict["galvos"].setData(
-                        x_label,
-                        self.waveform_data_dict[waveform_key],
-                        name=waveform_key,
-                    )
-                elif "galvos_X" in waveform_key or "galvos_Y" in waveform_key:
-                    self.PlotDataItem_dict["galvos_contour"].setData(
-                        x_label,
-                        self.waveform_data_dict[waveform_key],
-                        name=waveform_key,
-                    )
-                else:
-                    self.PlotDataItem_dict[waveform_key].setData(
-                        x_label,
-                        self.waveform_data_dict[waveform_key],
-                        name=waveform_key,
-                    )
-            else:
-                if waveform_key != "cameratrigger":
-                    # In case of digital boolean signals, convert to int before
-                    # plotting.
-                    self.PlotDataItem_dict[waveform_key].setData(
-                        x_label,
-                        self.waveform_data_dict[waveform_key].astype(int),
-                        name=waveform_key,
-                    )
-                else:
-                    # For camera triggers, set to zeros so that it does not
-                    # block canvas.
-                    rectified_waveform = np.zeros(
-                        len(self.waveform_data_dict[waveform_key]), dtype=bool
-                    )
-
-                    self.PlotDataItem_dict[waveform_key].setData(
-                        x_label,
-                        rectified_waveform.astype(int),
-                        name=waveform_key,
-                    )
+                # 
+                if self.waveform_data_dict[waveform_key].dtype == "float64":
+                    # In case of galvos re-drawing
+                    if "galvos_contour" in waveform_key:
+                        self.PlotDataItem_dict["galvos_contour"].setData(
+                            x_label,
+                            self.waveform_data_dict[waveform_key],
+                            name=waveform_key,
+                        )
+                    elif "galvosx" in waveform_key or "galvosy" in waveform_key:
+                        self.PlotDataItem_dict["galvos"].setData(
+                            x_label,
+                            self.waveform_data_dict[waveform_key],
+                            name=waveform_key,
+                        )
+                    elif "galvos_X" in waveform_key or "galvos_Y" in waveform_key:
+                        self.PlotDataItem_dict["galvos_contour"].setData(
+                            x_label,
+                            self.waveform_data_dict[waveform_key],
+                            name=waveform_key,
+                        )
+                    else:
+                        self.PlotDataItem_dict[waveform_key].setData(
+                            x_label,
+                            self.waveform_data_dict[waveform_key],
+                            name=waveform_key,
+                        )
+                
 
         # === Making containers ===
         digital_line_num = 0
