@@ -22,9 +22,7 @@ def xValuesSingleSawtooth(
     constants = HardwareConstants()
     speedGalvo = constants.maxGalvoSpeed  # Volt/s
     aGalvo = constants.maxGalvoAccel  # Acceleration galvo in volt/s^2
-    aGalvoPix = aGalvo / (
-        sampleRate**2
-    )  # Acceleration galvo in volt/pixel^2
+    aGalvoPix = aGalvo / (sampleRate**2)  # Acceleration galvo in volt/pixel^2
     xArray = np.array([])  # Array for x voltages
     rampUpSpeed = (
         voltXMax - voltXMin
@@ -186,7 +184,7 @@ def waveRecPic(
     sawtooth=True,
 ):
     """
-    Generates a the x and y values for making rectangular picture with a scanning laser.
+    Generates the x and y values for making rectangular picture with a scanning laser.
     """
     xArray, lineSize = xValuesSingleSawtooth(
         sampleRate, voltXMin, voltXMax, xPixels, sawtooth
@@ -346,7 +344,9 @@ class generate_AO_for640:
 
 
 class generate_digital_waveform:
-    def __init__(self, value1, value2, value3, value4, value5, value6, value7):
+    def __init__(
+        self, value1, value2, value3, value4, value5, value6, value7, value8
+    ):
         self.Daq_sample_rate = value1
         self.wavefrequency = value2
         self.waveoffset = value3
@@ -354,6 +354,7 @@ class generate_digital_waveform:
         self.waveDC = value5
         self.waverepeat = value6
         self.wavegap = value7
+        self.fiveVolts = value8
 
     def generate(self):
         self.offsetsamples_number = int(
@@ -399,6 +400,8 @@ class generate_digital_waveform:
         self.finalwave = np.append(self.offsetsamples, self.waverepeated)
         # self.finalwave = np.append(self.finalwave, False)
 
+        if self.fiveVolts:
+            self.finalwave = 5 * self.finalwave
         return self.finalwave
 
 
@@ -522,7 +525,7 @@ class generate_AO:
                 (self.waveperiod_2 / 1000) * self.Daq_sample_rate
             ),  # time domain
             at=np.array(
-                [(self.start_time_2 * self.Daq_sample_rate)]
+                [self.start_time_2 * self.Daq_sample_rate]
             ),  # times of pulses
             shape=rect(self.shape * self.Daq_sample_rate),  # shape of pulse
         )

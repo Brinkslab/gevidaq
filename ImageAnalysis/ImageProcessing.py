@@ -48,8 +48,6 @@ from skimage.restoration import denoise_tv_chambolle
 from skimage.segmentation import clear_border
 from skimage.transform import resize
 
-# import plotly.express as px
-
 
 class ProcessImage:
     # %%
@@ -147,6 +145,7 @@ class ProcessImage:
         RoundNumberList = []
         CoordinatesList = []
         for eachfilename in fileNameList:
+
             # Get how many rounds are there
             try:
                 RoundNumberList.append(
@@ -323,12 +322,14 @@ class ProcessImage:
             )
             ax_showlabel.imshow(image)  # Show the first image
         for region in regionprops(label_image, intensity_image=image):
+
             # skip small images
             if (
                 region.area > smallest_size
                 and region.mean_intensity > lowest_region_intensity
                 and region.area < biggest_size
             ):
+
                 # draw rectangle around segmented coins
                 minr, minc, maxr, maxc = region.bbox
                 boundingbox_info = "minr{}_minc{}_maxr{}_maxc{}".format(
@@ -383,10 +384,7 @@ class ProcessImage:
                     np.where(contour_mask_thin_line == 1)[0]
                 )
                 Roundness = (
-                    4
-                    * math.pi
-                    * filled_mask_area
-                    / contour_mask_perimeter**2
+                    4 * math.pi * filled_mask_area / contour_mask_perimeter**2
                 )
 
                 # Roundness Threshold
@@ -433,6 +431,7 @@ class ProcessImage:
                         contour_soma_ratio = 0
 
                     if DeadPixelPercentage <= DeadPixelPercentageThreshold:
+
                         dirforcellprp[CellSequenceInRegion] = (
                             boundingbox_info,
                             MeanIntensity_FilledArea,
@@ -532,6 +531,7 @@ class ProcessImage:
             ax_showlabel.imshow(image)  # Show the first image
 
         for Each_bounding_box in bbox_list:
+
             # Retrieve boundingbox information
             minr = int(
                 Each_bounding_box[
@@ -860,9 +860,11 @@ class ProcessImage:
         for subcellregion in regionprops(
             IndividualCell_label_image, intensity_image=RawRegionImg.copy()
         ):
+
             if (
                 subcellregion.area < SubCellClearUpSize
             ):  # Clean parts that are smaller than SubCellClearUpSize, which should result in only one main part left.
+
                 for EachsubcellregionCoords in subcellregion.coords:
                     # print(EachsubcellregionCoords.shape)
                     filled_mask_bef[
@@ -931,7 +933,9 @@ class ProcessImage:
         for subcellregion_convolve2d in regionprops(
             IndividualCell_label_image, intensity_image=RawRegionImg.copy()
         ):
+
             if subcellregion_convolve2d.area < SubCellClearUpSize:
+
                 for EachsubcellregionCoords in subcellregion_convolve2d.coords:
                     # print(EachsubcellregionCoords.shape)
                     filled_mask_reconstructed[
@@ -975,8 +979,10 @@ class ProcessImage:
         for region in regionprops(
             label_image, intensity_image=image
         ):  # USE first image in stack before perfusion as template
+
             # skip small images
             if region.area > smallest_size:
+
                 # draw rectangle around segmented coins
                 minr, minc, maxr, maxc = region.bbox
 
@@ -1324,12 +1330,8 @@ class ProcessImage:
 
             # === speed and accelation check ===
             time_gap = 1 / sampling_rate
-            contour_x_acceleration = (
-                np.diff(X_interpolated, n=2) / time_gap**2
-            )
-            contour_y_acceleration = (
-                np.diff(Y_interpolated, n=2) / time_gap**2
-            )
+            contour_x_acceleration = np.diff(X_interpolated, n=2) / time_gap**2
+            contour_y_acceleration = np.diff(Y_interpolated, n=2) / time_gap**2
 
             if AccelerationGalvo < np.amax(abs(contour_x_acceleration)):
                 print(
@@ -1425,6 +1427,7 @@ class ProcessImage:
 
             std_list = []
             for each_point_index in range(100):
+
                 # collect each time position over all loops
                 individual_points_array = []
                 for i in range(5000):
@@ -1647,9 +1650,11 @@ class ProcessImage:
             type(vertices_assemble) is list
             or type(vertices_assemble) is np.ndarray
         ):
+
             vertices_assemble = np.asarray(vertices_assemble)
 
             if "camera-dmd-" + laser in dict_transformations.keys():
+
                 vertices_transformed = ProcessImage.transform(
                     vertices_assemble,
                     dict_transformations["camera-dmd-" + laser],
@@ -1659,13 +1664,13 @@ class ProcessImage:
                 list_of_rois_transformed.append(vertices_assemble)
                 print("Warning: not registered")
 
-            mask_transformed[
-                laser
-            ] = ProcessImage.CreateBinaryMaskFromRoiCoordinates(
-                list_of_rois_transformed,
-                fill_contour=flag_fill_contour,
-                contour_thickness=contour_thickness,
-                invert_mask=flag_invert_mode,
+            mask_transformed[laser] = (
+                ProcessImage.CreateBinaryMaskFromRoiCoordinates(
+                    list_of_rois_transformed,
+                    fill_contour=flag_fill_contour,
+                    contour_thickness=contour_thickness,
+                    invert_mask=flag_invert_mode,
+                )
             )
             print(mask_transformed[laser].shape)
 
@@ -1714,6 +1719,7 @@ class ProcessImage:
         )  # Find iso-valued contours in a 2D array for a given level value.
 
         for n, contour in enumerate(contours):
+
             mask_transformed = ProcessImage.vertices_to_DMD_mask(
                 contour,
                 laser,
@@ -1752,6 +1758,7 @@ class ProcessImage:
         transformed_points = np.zeros([num_points, 2])
 
         for i in range(num_points):
+
             Q = ProcessImage.createTransformationMatrix(r[i, :])
 
             if Q is None:
@@ -2039,6 +2046,7 @@ class ProcessImage:
                     total_cells_identified += 1
 
             elif MLresults["class_ids"][eachROI] == 2:  # Round cells
+
                 total_cells_identified += 1
 
         if flat_cell_counted_inImage == 0:
@@ -2072,6 +2080,7 @@ class ProcessImage:
         whole_registered_dataframe = data_frame_list[0].set_index("Unnamed: 0")
 
         for previous_dataframe_index in range(len(data_frame_list) - 1):
+
             if previous_dataframe_index == 0:
                 registered_dataframe = (
                     ProcessImage.Register_between_dataframes(
@@ -2207,6 +2216,7 @@ class ProcessImage:
             ]
 
             for index_2, row_Data_2 in DataFrame_of_same_coordinate.iterrows():
+
                 bounding_box_str_latter = row_Data_2["BoundingBox"]
                 # Retrieve boundingbox information
                 (
@@ -2263,6 +2273,7 @@ class ProcessImage:
                 and max(intersection_area_percentage_list)
                 > boundingbox_overlapping_thres
             ):
+
                 registered_cell_index = index_list_same_coordinate[
                     intersection_area_percentage_list.index(
                         max(intersection_area_percentage_list)
@@ -2586,6 +2597,7 @@ class ProcessImage:
                     index_2,
                     row_Data_2,
                 ) in DataFrame_of_same_coordinate_Data2.iterrows():
+
                     # ImgNameInforString_Data2 = row_Data_2['ImgNameInfor_KC']
                     try:
                         bounding_box_str_Data_2 = row_Data_2["BoundingBox_KC"]
@@ -3269,9 +3281,9 @@ class ProcessImage:
         # At each pixel position, generate a percentage weight of this pixel, e.g., 0 for background pixels.
         weightimage = weightimage / np.mean(weightimage)
 
-        estimate_DV[
-            np.isnan(estimate_DV)
-        ] = 0  # Set places where imgs2 == NaN to zero
+        estimate_DV[np.isnan(estimate_DV)] = (
+            0  # Set places where imgs2 == NaN to zero
+        )
 
         return corrimage, weightimage, sigmaimage
 
@@ -3870,6 +3882,7 @@ class ProcessImage:
         return err
 
     def illumination_correction(laser_profile, camera_base_values=100):
+
         # The base value is the pixel value for camera sensor under no light, for Hamamastu it's normally 100.
         camera_base_image = (
             np.ones((laser_profile.shape[0], laser_profile.shape[1])).astype(
@@ -4044,10 +4057,9 @@ class ProcessImage:
         for each_file_name in fileNameList:
             img_stack.append(imread(each_file_name))
 
-        (
-            focus_degree_list,
-            index_highest_focus_degree,
-        ) = ProcessImage.find_infocus_from_list(img_stack, method)
+        focus_degree_list, index_highest_focus_degree = (
+            ProcessImage.find_infocus_from_list(img_stack, method)
+        )
 
         print(fileNameList[index_highest_focus_degree])
 
@@ -4128,6 +4140,7 @@ class ProcessImage:
         for each_round in RoundNumberList:
             # Do Z-stack max projection
             for each_coordinate in CoordinatesList:
+
                 # list of z stack images of same coordinate.
                 img_zstack_list = []
                 for each_file_name in fileNameList:
@@ -4248,6 +4261,7 @@ class ProcessImage:
                 if (
                     Each_round in Each_coord_image_filename
                 ):  # Loop through each image in round
+
                     if row_data_folder is True:
                         Coord_text = Each_coord_image_filename[
                             Each_coord_image_filename.index(
@@ -4407,6 +4421,7 @@ class ProcessImage:
                 if (
                     Each_round in Each_coord_image_filename
                 ):  # Loop through each image in round
+
                     Coord_text = Each_coord_image_filename[
                         Each_coord_image_filename.index(
                             "_R"
@@ -4573,6 +4588,7 @@ class ProcessImage:
 
         laser_on_phase_current = []
         for phase_key in laser_on_phases:
+
             current_each_phase = np.mean(
                 current_curve[
                     laser_on_phases[phase_key][0] : laser_on_phases[phase_key][
@@ -4583,6 +4599,7 @@ class ProcessImage:
             laser_on_phase_current.append(current_each_phase)
         laser_off_phase_current = []
         for phase_key in laser_off_phases:
+
             current_each_phase = np.mean(
                 current_curve[
                     laser_off_phases[phase_key][0] : laser_off_phases[
@@ -4745,6 +4762,7 @@ class ProcessImage:
         step_voltage_frequency=5,
         number_of_periods=25,
     ):
+
         averaged_single_period = ProcessImage.PMT_contour_scan_processing(
             path, DAQ_sampling_rate, points_per_contour, number_of_periods
         )
@@ -4979,8 +4997,10 @@ class ProcessImage:
         fast_constant_percentage_threshold = 40
 
         for plotting_property in key_field:
+
             data_list = []
             for each_sheet in sheet_dictionary:
+
                 data_frame_each_sheet = pd.read_excel(xls, each_sheet)
 
                 if sheet_dictionary[each_sheet] == None:
@@ -5020,6 +5040,7 @@ class ProcessImage:
                 # Data type check
                 delete_index = []
                 for each_content_index in range(len(column_values)):
+
                     # if not a float number, delete it.
                     if (
                         type(column_values[each_content_index]) != np.float64
@@ -5032,6 +5053,7 @@ class ProcessImage:
                 for each_content_index in range(len(column_values)):
                     # In case of plotting time constants, make the selection here
                     if plotting_property == "upswing fast tau(s)":
+
                         # For the time constant, if fast component percentage is too low
                         if (
                             float(Tfast_percentage_values[each_content_index])
@@ -5055,9 +5077,9 @@ class ProcessImage:
                                 * (1 - fast_time_constant_percentage)
                             )
 
-                            column_values[
-                                each_content_index
-                            ] = overall_time_constant
+                            column_values[each_content_index] = (
+                                overall_time_constant
+                            )
 
                 # Get rid of the nan
                 column_values = [x for x in column_values if str(x) != "nan"]
@@ -5365,6 +5387,7 @@ class PatchAnalysis:
             )
 
     def ExtractPeriod(self):
+
         # === Cut out the skipping periods ===
         # Here use self.fluorescence_trace_for_sensitivity
         self.skip_frame_number = int(
@@ -5405,6 +5428,7 @@ class PatchAnalysis:
         self.averaged_single_period = np.roll(self.averaged_single_period, 1)
 
     def FitSinglePeriod(self):
+
         fig5, ax = plt.subplots(figsize=(10.0, 8))
 
         # ===== Bi-exponential function for the fitting algorithm =====
@@ -5745,6 +5769,7 @@ class PatchAnalysis:
             )
 
     def ExtractSensitivity(self):
+
         # Fluorescence changes to voltage steps were calculated as Δ F/F = (Fss – Fbl)/Fbl ,
         # where Fss(steady-state fluorescence) is the mean fluorescence intensity averaged
         # over 50-70 ms during a voltage step after the fluorescence signal reaches
@@ -5817,6 +5842,7 @@ class PatchAnalysis:
         )
 
     def Statistics(self):
+
         self.statistics_test = (
             "\n"
             + "                    Statistics "
@@ -5882,6 +5908,7 @@ class CurveFit:
         main_directory=None,
         rhodopsin="Not specified",
     ):
+
         # Input for initialization of the class ####
         # fluorescence   = Weighted trace of fluorescence signal
         # waveform       = waveform generated with Native Instruments DAQ, here is Vp
@@ -5914,6 +5941,7 @@ class CurveFit:
         self.main_directory = main_directory
 
     def Photobleach(self):
+
         # Bi-exponential curve for the fitting algorithm
         def bleachfunc(t, a, t1, b, t2):
             return a * np.exp(-(t / t1)) + b * np.exp(-(t / t2))
@@ -6058,6 +6086,7 @@ class CurveFit:
         )
 
     def IsolatePeriods(self):
+
         # Initialize empty periodic fluorescence and periodic time list
         self.periods_fluorescence_sensitivity = []
         self.periods_fluorescence_kinetics = []
@@ -6069,9 +6098,9 @@ class CurveFit:
         # True values        = values belonging top of square wave
         # False values       = values belonging to bottom of square wave
         self.waveform = self.waveform > self.midpoint
-        self.waveform[
-            :2
-        ] = True  # This line is redundant if you skip the first 7 values of the waveform
+        self.waveform[:2] = (
+            True  # This line is redundant if you skip the first 7 values of the waveform
+        )
         self.waveform_time_matrix = np.column_stack(
             (self.waveform, self.timewaveform)
         )
@@ -6225,6 +6254,7 @@ class CurveFit:
         self.periods_time = TidyData(self.periods_time)
 
     def TransformCurves(self):
+
         # Initialize empty lists ####
         # vertical_translation       = will store vertical translations (flourescence elevation) for every isolated period
         # horizontal_translation     = will store horizontal translations (time lapse) for every isolated period
@@ -6380,6 +6410,7 @@ class CurveFit:
         )
 
     def fit_on_averaged_curve(self):
+
         # try:
         # Initialize figure before for-loop
         fig, ax = plt.subplots(figsize=(10.0, 8))
@@ -6614,6 +6645,7 @@ class CurveFit:
         # print('fit_on_averaged_curve failed.')
 
     def ExponentialFitting(self):
+
         # Intialize empty lists
         # bi_exponential_ratio       = will store amplitude of time constants
         # time_constant_parameters   = will store optimal time constants, extracted from parameters_fit
@@ -6629,6 +6661,7 @@ class CurveFit:
         # at the end of the CurveAveraging() method. Hence, this code also works for data that
         # is not averaged when you skip over the CurveAveraging method.
         for ii in range(len(self.periods_fluorescence_kinetics)):
+
             # Bi-exponential function for the fitting algorithm
 
             # F(t) = A × (C × exp(–t/t1) + (1 – C) × exp(–t/t2)), where t1 was the time constant
@@ -6726,6 +6759,7 @@ class CurveFit:
             )
 
     def extract_sensitivity(self):
+
         # Fluorescence changes to voltage steps were calculated as Δ F/F = (Fss – Fbl)/Fbl ,
         # where Fss(steady-state fluorescence) is the mean fluorescence intensity averaged
         # over 50-70 ms during a voltage step after the fluorescence signal reaches
@@ -6751,6 +6785,7 @@ class CurveFit:
         # at the end of the CurveAveraging() method. Hence, this code also works for data that
         # is not averaged when you skip over the CurveAveraging method.
         for ii in range(len(self.periods_fluorescence_sensitivity)):
+
             period_length = len(self.periods_fluorescence_sensitivity[ii])
 
             # Upswings period
@@ -6918,6 +6953,7 @@ class CurveFit:
         )
 
     def Statistics(self):
+
         # Data transformation to put it in a nice Numpy format
         self.time_constant_parameters = np.array(
             self.time_constant_parameters.copy()
@@ -7073,6 +7109,7 @@ class CurveFit:
         )
 
     def Normalization(self, V0, V1, V0_reference, V1_reference):
+
         # Assumtion that the fluorescence signal, F(V), is linear with V
         # self.V0, self.V1, self.V0_reference, self.V1_reference = [int(x) for x in input('V0 V1 V0_reference V1_reference ').split()]
         self.V0, self.V1, self.V0_reference, self.V1_reference = (
@@ -7195,7 +7232,7 @@ if __name__ == "__main__":
 
     elif PMT_contour_scan_processing is True:
         fluorescence_trace_normalized_for_average = ProcessImage.CurveFit_PMT(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-04 2p Patch\QuasAr1\CELL3\ND1\PMT_array_2021-08-04_14-39-35.npy",  # TODO hardcoded path
+            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\People\Xin Meng\paperwork\Dissertation\Figures\Chapter GR\2P patch\PMT_array_2021-08-06_14-27-18.npy",  # TODO hardcoded path
             number_of_periods=25,
         )
     elif screening_comparison is True:
