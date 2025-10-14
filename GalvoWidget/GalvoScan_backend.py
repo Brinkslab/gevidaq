@@ -12,7 +12,7 @@ from nidaqmx.constants import AcquisitionType, TaskMode
 from nidaqmx.stream_writers import AnalogMultiChannelWriter, DigitalMultiChannelWriter
 from nidaqmx.stream_readers import AnalogSingleChannelReader
 from PyQt5.QtCore import pyqtSignal, QThread
-import skimage.external.tifffile as skimtiff
+import tifffile as skimtiff
 import time
 import os
 import matplotlib.pyplot as plt
@@ -272,7 +272,7 @@ class PMT_zscan:
         for self.each_pos_index in range(len(self.z_stack_positions)):
             if self.scanning_flag == True:
                 # Go through each position and get image.
-                self.make_PMT_iamge(
+                self.make_PMT_image(
                     round(self.z_stack_positions[self.each_pos_index], 6)
                 )
             else:
@@ -283,7 +283,7 @@ class PMT_zscan:
     def stop_scan(self):
         self.scanning_flag = False
 
-    def make_PMT_iamge(self, obj_position=None):
+    def make_PMT_image(self, obj_position=None):
         """
         Take PMT image at certain objective position.
 

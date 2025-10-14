@@ -13,8 +13,7 @@ import time
 import datetime
 from PyQt5.QtCore import QThread, pyqtSignal
 import matplotlib.pyplot as plt
-import skimage.external.tifffile as skimtiff
-import scipy.optimize
+import tifffile as skimtiff
 import skimage.draw
 from CoordinatesManager.backend import readRegistrationImages
 from CoordinatesManager.backend.polynomialTransformation import polynomialRegression

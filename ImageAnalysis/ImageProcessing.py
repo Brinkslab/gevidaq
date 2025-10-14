@@ -13,21 +13,21 @@ import time
 from skimage import img_as_ubyte
 from skimage.filters import threshold_otsu, threshold_local
 from skimage.filters.rank import entropy
-from skimage.segmentation import clear_border
+# from skimage.segmentation import clear_border
 from skimage.measure import label, perimeter, find_contours
-from skimage.morphology import (
-    closing,
-    square,
-    opening,
-    reconstruction,
-    skeletonize,
-    convex_hull_image,
-    dilation,
-    thin,
-    binary_erosion,
-    disk,
-    binary_dilation,
-)
+# from skimage.morphology import (
+#     closing,
+#     square,
+#     opening,
+#     reconstruction,
+#     skeletonize,
+#     convex_hull_image,
+#     dilation,
+#     thin,
+#     binary_erosion,
+#     disk,
+#     binary_dilation,
+# )
 from skimage.measure import regionprops, moments, moments_central, moments_hu
 from skimage.draw import line, polygon2mask, polygon_perimeter
 from skimage.color import label2rgb, gray2rgb, rgb2gray
@@ -35,7 +35,7 @@ from skimage.restoration import denoise_tv_chambolle
 from skimage.io import imread
 from skimage.transform import rotate, resize
 from scipy.signal import convolve2d
-import skimage.external.tifffile as skimtiff
+import tifffile as skimtiff
 from PIL import Image
 from PIL.TiffTags import TAGS
 import scipy.interpolate as interpolate
@@ -48,7 +48,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import os
 import pandas as pd
 import scipy.stats as stats
-import cv2
+# import cv2
 import seaborn as sns
 
 # import plotly.express as px
@@ -4448,7 +4448,7 @@ class ProcessImage:
         
         photo_current = round(laser_on_phase_current - laser_off_phase_current, 3)
         
-        electrical_signals_figure, ax1 = plt.subplots(1, 1)
+        electrical_signals_figure, ax1 = plt.subplots(1,1)
 
         ax1.plot(
             patchcurrentlabel, current_curve, label="Current", color="b"
@@ -7087,7 +7087,7 @@ if __name__ == "__main__":
         ProcessImage.PhotoCurrent(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-07 GR mutants\E166Q\CELL5\Photocurrent")
     
     elif PMT_contour_scan_processing == True:
-        fluorescence_trace_normalized_for_average = ProcessImage.CurveFit_PMT(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-04 2p Patch\QuasAr1\CELL3\ND1\PMT_array_2021-08-04_14-39-35.npy"\
+        fluorescence_trace_normalized_for_average = ProcessImage.CurveFit_PMT(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\People\Xin Meng\paperwork\Dissertation\Figures\Chapter GR\2P patch\PMT_array_2021-08-06_14-27-18.npy"\
                                                                                              , number_of_periods = 25)
     elif screening_comparison == True:
         ProcessImage.Screening_boxplot(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2022-06-14 evolution screening H106R\data collection ratio.xlsx")

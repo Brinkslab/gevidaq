@@ -23,7 +23,10 @@ from PatchClamp.smartpatcher_backend import SmartPatcher
 from PatchClamp.camerathread import CameraThread
 from PatchClamp.sealtestthread import SealTestThread
 from PatchClamp.pressurethread import PressureThread
-from PatchClamp.objective import PIMotor
+try:
+    from PatchClamp.objective import PIMotor
+except:
+    print("pipython not configured.")
 from PatchClamp.micromanipulator import ScientificaPatchStar
 from PatchClamp.stage import LudlStage
 

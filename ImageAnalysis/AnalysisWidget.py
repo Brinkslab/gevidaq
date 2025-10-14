@@ -52,7 +52,7 @@ from skimage.io import imread
 import threading
 import time
 from scipy.optimize import curve_fit
-import skimage.external.tifffile as skimtiff
+import tifffile as skimtiff
 
 # Ensure that the Widget can be run either independently or as part of Tupolev.
 if __name__ == "__main__":

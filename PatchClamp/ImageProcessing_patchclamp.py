@@ -7,7 +7,7 @@ Created on Thu Aug 26 11:52:09 2021
 
 import numpy as np
 from scipy import cluster
-from skimage import filters, feature, transform
+# from skimage import filters, feature, transform
 
 
 class PatchClampImageProcessing:

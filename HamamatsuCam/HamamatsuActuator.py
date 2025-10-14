@@ -17,7 +17,7 @@ sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import numpy as np
 from PIL import Image
-import skimage.external.tifffile as skimtiff
+import tifffile as skimtiff
 import ctypes
 import time
 import threading
@@ -316,6 +316,7 @@ if __name__ == "__main__":
     time.sleep(3.5)
     cam.isSaving = True
     tif_name = r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\test.tif"
+    tif_name= r'M:/tnw/ist/do/projects/Neurophotonics/Brinkslab/Data/Patch clamp/2024_05_07 Ian Test/test_123.tif'
     cam.StopStreaming(saving_dir=tif_name)
     # Make sure that the saving process is finished.
     while cam.isSaving == True:

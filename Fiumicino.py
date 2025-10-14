@@ -11,7 +11,7 @@ Created on Sat Aug 10 20:54:40 2019
     
     - HamamatsuCam.HamamatsuUI: Hamamatsu orca flash 4.0 camera user interface.
     - PatchClamp.ui_patchclamp_sealtest: The GUI for patch clamp.
-    - NIDAQ.WaveformWidget: The GUI for configuring and executing waveforms in National Instrument Data Acquisition (DAQ) device.
+    - NIDAQ.WaveformWidget: The GUI for configuring and executing waveforms in National Instrument Data Acquisition (DAQ) device.   
     - GalvoWidget.PMTWidget: For PMT scanning imaging.
     - ImageAnalysis.AnalysisWidget: Data Analysis widget.
     - SampleStageControl.StageMoveWidget: The GUI for sample stage movement control.
@@ -24,6 +24,7 @@ Created on Sat Aug 10 20:54:40 2019
 from __future__ import division
 import os
 import sys
+
 from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal, QRectF, QPoint, QRect, QObject, QSize
 from PyQt5.QtGui import (
@@ -97,6 +98,9 @@ import PatchClamp.smartpatcher_frontend
 
 
 class Mainbody(QWidget):
+
+    savedirectory_changed = pyqtSignal(str)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -114,26 +118,24 @@ class Mainbody(QWidget):
         # ----------------------------------------------------------------------
         # ----------------------------------GUI---------------------------------
         # ----------------------------------------------------------------------
-        self.setMinimumSize(1630, 1080)
-        self.setMaximumHeight(1080)
+        self.setMinimumSize(800, 600)
+        # self.setMaximumHeight(1080)
         self.setWindowTitle("Fiumicino")
         self.layout = QGridLayout(self)
+        
         """
         # =============================================================================
         #         GUI for right tabs panel-Creating instances of each widget showing on right side tabs.
         # =============================================================================
         """
         self.tabs = QTabWidget()
-        self.Camera_WidgetInstance = HamamatsuCam.HamamatsuUI.CameraUI()
         self.Galvo_WidgetInstance = GalvoWidget.PMTWidget.PMTWidgetUI()
         self.Waveformer_WidgetInstance = NIDAQ.WaveformWidget.WaveformGenerator()
-        self.PatchClamp_WidgetInstance = (
-            PatchClamp.ui_patchclamp_sealtest.PatchclampSealTestUI()
-        )
+        self.Camera_WidgetInstance = HamamatsuCam.HamamatsuUI.CameraUI(self.Galvo_WidgetInstance, self.Waveformer_WidgetInstance)
+        self.savedirectory_changed.connect(self.Camera_WidgetInstance.update_savedirectory)
+        self.PatchClamp_WidgetInstance = (PatchClamp.ui_patchclamp_sealtest.PatchclampSealTestUI())
         self.Analysis_WidgetInstance = ImageAnalysis.AnalysisWidget.AnalysisWidgetUI()
-        self.Coordinate_WidgetInstance = (
-            CoordinatesManager.CoordinateWidget2.CoordinatesWidgetUI()
-        )
+        self.Coordinate_WidgetInstance = (CoordinatesManager.CoordinateWidget2.CoordinatesWidgetUI())
 
         # --------------Add tab widgets-------------------
         self.tabs.addTab(self.Camera_WidgetInstance, "Camera imaging")
@@ -444,14 +446,11 @@ class Mainbody(QWidget):
     # =============================================================================
     # Set the savedirectory and prefix of Waveform widget in syn.
     def set_saving_directory(self):
-        self.savedirectory = str(
-            QtWidgets.QFileDialog.getExistingDirectory(
-                caption="Set saving directory",
-                directory=""
-                # options = QFileDialog.DontUseNativeDialog
-            )
-        )
+        self.savedirectory = str(QtWidgets.QFileDialog.getExistingDirectory(caption="Set saving directory",directory=""))
         self.savedirectorytextbox.setText(self.savedirectory)
+
+        # Emit the signal to notify other widgets
+        self.savedirectory_changed.emit(self.savedirectory) 
 
         # Assert saving directories in other widgets
         self.Galvo_WidgetInstance.savedirectory = self.savedirectory
@@ -464,6 +463,9 @@ class Mainbody(QWidget):
 
     def update_saving_directory(self):
         self.savedirectory = str(self.savedirectorytextbox.text())
+
+        # Emit the signal to notify other widgets
+        self.savedirectory_changed.emit(self.savedirectory) 
 
     def set_prefix(self):
         self.saving_prefix = str(self.prefixtextbox.text())

@@ -14,7 +14,7 @@ import os
 from datetime import datetime
 import math
 from skimage.io import imread
-import skimage.external.tifffile as skimtiff
+import tifffile as skimtiff
 import threading
 
 from SampleStageControl.stage import LudlStage

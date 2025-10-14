@@ -183,7 +183,7 @@ def waveRecPic(
     sawtooth=True,
 ):
     """
-    Generates a the x and y values for making rectangular picture with a scanning laser.
+    Generates the x and y values for making rectangular picture with a scanning laser.
     """
     xArray, lineSize = xValuesSingleSawtooth(
         sampleRate, voltXMin, voltXMax, xPixels, sawtooth
@@ -593,7 +593,7 @@ class generate_AO_for640:
 
 
 class generate_digital_waveform:
-    def __init__(self, value1, value2, value3, value4, value5, value6, value7):
+    def __init__(self, value1, value2, value3, value4, value5, value6, value7, value8):
         self.Daq_sample_rate = value1
         self.wavefrequency = value2
         self.waveoffset = value3
@@ -601,6 +601,7 @@ class generate_digital_waveform:
         self.waveDC = value5
         self.waverepeat = value6
         self.wavegap = value7
+        self.fiveVolts = value8
 
     def generate(self):
 
@@ -642,7 +643,9 @@ class generate_digital_waveform:
         # Append a False in the end
         self.finalwave = np.append(self.offsetsamples, self.waverepeated)
         # self.finalwave = np.append(self.finalwave, False)
-
+        
+        if self.fiveVolts:
+            self.finalwave = 5*self.finalwave
         return self.finalwave
 
 
@@ -972,10 +975,10 @@ def dark_probe(
     # plt.show()
 
     dataType_analog = np.dtype(
-        [("Waveform", float, (len(sig),)), ("Sepcification", "U20")]
+        [("Waveform", float, (len(sig),)), ("Specification", "U20")]
     )
     dataType_digital = np.dtype(
-        [("Waveform", bool, (len(camera_signal),)), ("Sepcification", "U20")]
+        [("Waveform", bool, (len(camera_signal),)), ("Specification", "U20")]
     )
     analog_array = np.zeros(1, dtype=dataType_analog)
     digital_array = np.zeros(1, dtype=dataType_digital)

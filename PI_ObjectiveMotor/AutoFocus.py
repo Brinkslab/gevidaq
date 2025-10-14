@@ -24,7 +24,7 @@ from ImageAnalysis.ImageProcessing import ProcessImage
 from GalvoWidget.GalvoScan_backend import RasterScan
 from HamamatsuCam.HamamatsuActuator import CamActuator
 from NIDAQ.DAQoperator import DAQmission
-import skimage.external.tifffile as skimtiff
+import tifffile as skimtiff
 import time
 import matplotlib.pyplot as plt
 import numpy as np

@@ -30,9 +30,7 @@ from NIDAQ.constants import MeasurementConstants
 
 
 class pmtimaging_continuous_Thread(QThread):
-    measurement = pyqtSignal(
-        np.ndarray
-    )  # The signal for the measurement, we can connect to this signal
+    measurement = pyqtSignal(np.ndarray)  # The signal for the measurement, we can connect to this signal
 
     def __init__(
         self,
@@ -55,9 +53,7 @@ class pmtimaging_continuous_Thread(QThread):
         self.readNumber = readNumber
         self.averagenumber = averagenumber
         self.ScanArrayXnum = int(ScanArrayXnum)
-        self.ypixelnumber = int(
-            (self.readNumber / self.averagenumber) / self.ScanArrayXnum
-        )
+        self.ypixelnumber = int((self.readNumber / self.averagenumber) / self.ScanArrayXnum)
 
         self.wave = wave
 
