@@ -50,6 +50,8 @@ from . import Icons
 
 
 class Mainbody(QtWidgets.QWidget):
+    savedirectory_changed = pyqtSignal(str)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -61,22 +63,22 @@ class Mainbody(QtWidgets.QWidget):
         # ----------------------------------------------------------------------
         # ----------------------------------GUI---------------------------------
         # ----------------------------------------------------------------------
-        self.setMinimumSize(1630, 1080)
-        self.setMaximumHeight(1080)
+        self.setMinimumSize(800, 600)
+        # self.setMaximumHeight(1080)
         self.setWindowTitle("Fiumicino")
         self.layout = QtWidgets.QGridLayout(self)
+
         """
         # =============================================================================
         #         GUI for right tabs panel-Creating instances of each widget showing on right side tabs.
         # =============================================================================
         """
         self.tabs = QtWidgets.QTabWidget()
-        self.Camera_WidgetInstance = HamamatsuCam.HamamatsuUI.CameraUI()
         self.Galvo_WidgetInstance = GalvoWidget.PMTWidget.PMTWidgetUI()
         self.Waveformer_WidgetInstance = NIDAQ.WaveformWidget.WaveformGenerator()
-        self.PatchClamp_WidgetInstance = (
-            PatchClamp.ui_patchclamp_sealtest.PatchclampSealTestUI()
-        )
+        self.Camera_WidgetInstance = HamamatsuCam.HamamatsuUI.CameraUI(self.Galvo_WidgetInstance, self.Waveformer_WidgetInstance)
+        self.savedirectory_changed.connect(self.Camera_WidgetInstance.update_savedirectory)
+        self.PatchClamp_WidgetInstance = (PatchClamp.ui_patchclamp_sealtest.PatchclampSealTestUI())
         self.Analysis_WidgetInstance = ImageAnalysis.AnalysisWidget.AnalysisWidgetUI()
         self.Coordinate_WidgetInstance = (
             CoordinatesManager.CoordinateWidget.CoordinatesWidgetUI()
@@ -384,14 +386,11 @@ class Mainbody(QtWidgets.QWidget):
     # =============================================================================
     # Set the savedirectory and prefix of Waveform widget in syn.
     def set_saving_directory(self):
-        self.savedirectory = str(
-            QtWidgets.QFileDialog.getExistingDirectory(
-                caption="Set saving directory",
-                directory=""
-                # options = QFileDialog.DontUseNativeDialog
-            )
-        )
+        self.savedirectory = str(QtWidgets.QFileDialog.getExistingDirectory(caption="Set saving directory",directory=""))
         self.savedirectorytextbox.setText(self.savedirectory)
+
+        # Emit the signal to notify other widgets
+        self.savedirectory_changed.emit(self.savedirectory)
 
         # Assert saving directories in other widgets
         self.Galvo_WidgetInstance.savedirectory = self.savedirectory
@@ -404,6 +403,9 @@ class Mainbody(QtWidgets.QWidget):
 
     def update_saving_directory(self):
         self.savedirectory = str(self.savedirectorytextbox.text())
+
+        # Emit the signal to notify other widgets
+        self.savedirectory_changed.emit(self.savedirectory)
 
     def set_prefix(self):
         self.saving_prefix = str(self.prefixtextbox.text())

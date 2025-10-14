@@ -44,7 +44,7 @@ from mpl_toolkits.mplot3d import Axes3D
 import os
 import pandas as pd
 import scipy.stats as stats
-import cv2
+# import cv2
 import seaborn as sns
 
 # import plotly.express as px
@@ -4317,7 +4317,7 @@ class ProcessImage:
 
         photo_current = round(laser_on_phase_current - laser_off_phase_current, 3)
 
-        electrical_signals_figure, ax1 = plt.subplots(1, 1)
+        electrical_signals_figure, ax1 = plt.subplots(1,1)
 
         ax1.plot(
             patchcurrentlabel, current_curve, label="Current", color="b"
@@ -6697,7 +6697,7 @@ if __name__ == "__main__":
         ProcessImage.PhotoCurrent(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-07 GR mutants\E166Q\CELL5\Photocurrent")  # TODO hardcoded path
 
     elif PMT_contour_scan_processing == True:
-        fluorescence_trace_normalized_for_average = ProcessImage.CurveFit_PMT(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-04 2p Patch\QuasAr1\CELL3\ND1\PMT_array_2021-08-04_14-39-35.npy"  # TODO hardcoded path
-                                                                                             , number_of_periods = 25)
+        fluorescence_trace_normalized_for_average = ProcessImage.CurveFit_PMT(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\People\Xin Meng\paperwork\Dissertation\Figures\Chapter GR\2P patch\PMT_array_2021-08-06_14-27-18.npy",  # TODO hardcoded path
+                                                                                             number_of_periods = 25)
     elif screening_comparison == True:
         ProcessImage.Screening_boxplot(r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2022-06-14 evolution screening H106R\data collection ratio.xlsx")  # TODO hardcoded path

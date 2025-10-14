@@ -22,10 +22,12 @@ from .smartpatcher_backend import SmartPatcher
 from .camerathread import CameraThread
 from .sealtestthread import SealTestThread
 from .pressurethread import PressureThread
-from .objective import PIMotor
 from .micromanipulator import ScientificaPatchStar
 from .stage import LudlStage
-
+try:
+    from .objective import PIMotor
+except:
+    print("pipython not configured.")
 
 
 class PatchClampUI(QWidget):

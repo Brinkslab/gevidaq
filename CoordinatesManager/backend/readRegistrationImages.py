@@ -8,7 +8,7 @@ Created on Mon Mar 30 11:29:16 2020
 
 import numpy as np
 import matplotlib.pyplot as plt
-import skimage.feature
+# import skimage.feature
 import skimage.filters
 import skimage.restoration
 import skimage.exposure
