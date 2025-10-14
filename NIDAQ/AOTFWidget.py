@@ -27,6 +27,7 @@ from .ServoMotor import Servo
 
 
 class AOTFWidgetUI(QWidget):
+
     # waveforms_generated = pyqtSignal(object, object, list, int)
     # SignalForContourScanning = pyqtSignal(int, int, int, np.ndarray, np.ndarray)
     # MessageBack = pyqtSignal(str)
@@ -89,6 +90,10 @@ class AOTFWidgetUI(QWidget):
         self.switchbutton_blankingAll.clicked.connect(
             lambda: self.setChannelSwitch("640blanking")
         )
+        self.shutter640Button.clicked.connect(
+            lambda: self.shutter_CW_action("640")
+        )
+
         self.AOTFcontrolLayout.addWidget(
             self.switchbutton_blankingAll, 0, 2, 1, 2
         )
@@ -119,6 +124,10 @@ class AOTFWidgetUI(QWidget):
         )
         self.switchbutton_532.clicked.connect(
             lambda: self.setChannelSwitch("532blanking")
+        )
+
+        self.shutter532Button.clicked.connect(
+            lambda: self.shutter_CW_action("532")
         )
         # self.AOTFcontrolLayout.addWidget(self.switchbutton_532, 1, 1)
 
@@ -259,13 +268,22 @@ class AOTFWidgetUI(QWidget):
         self.sig_lasers_status_changed.emit(self.lasers_status)
 
     def shutter_CW_action(self, laser):
+        daq = DAQmission()
         if laser == "488":
             if self.shutter488Button.isChecked():
-                servo = Servo()
-                servo.rotate(target_servo="servo_modulation_1", degree=180)
+                daq.sendServoSignal("488 servo", True)
             else:
-                servo = Servo()
-                servo.rotate(target_servo="servo_modulation_1", degree=0)
+                daq.sendServoSignal("488 servo", False)
+        if laser == "532":
+            if self.shutter532Button.isChecked():
+                daq.sendServoSignal("532 servo", True)
+            else:
+                daq.sendServoSignal("532 servo", False)
+        if laser == "640":
+            if self.shutter640Button.isChecked():
+                daq.sendServoSignal("640 servo", True)
+            else:
+                daq.sendServoSignal("640 servo", False)
 
     def set_registration_mode(self, flag_registration_mode):
         if flag_registration_mode:

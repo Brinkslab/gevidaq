@@ -155,7 +155,7 @@ class PatchclampSealTestUI(QWidget):
 
         gainLayout.addWidget(QLabel("Probe"), 0, 3)
         self.probeGainList = QComboBox()
-        self.probeGainList.addItems(["100M\u03A9", "10G\u03A9"])
+        self.probeGainList.addItems(["100M\u03a9", "10G\u03a9"])
         gainLayout.addWidget(self.probeGainList, 1, 3)
 
         gainContainer.setLayout(gainLayout)
@@ -545,7 +545,7 @@ class PatchclampSealTestUI(QWidget):
             )  # Computing the current distance
             membraneResistance = dV / (dIss * 1000000)  # Ohms law (MegaOhm)
             self.resistanceLabel.setText(
-                "Resistance:  %.4f M\u03A9" % membraneResistance
+                "Resistance:  %.4f M\u03a9" % membraneResistance
             )
 
             self.estimated_size_resistance = 10000 / (
@@ -599,9 +599,7 @@ class PatchclampSealTestUI(QWidget):
             capacitance = 1000 * tau / resistance
             self.capacitanceLabel.setText("Capacitance:  %.4f" % capacitance)
 
-            self.estimated_size_capacitance = (
-                capacitance * (10**-12) * (10**6)
-            )
+            self.estimated_size_capacitance = capacitance * (10**-12) * (10**6)
 
             if (
                 self.estimated_size_capacitance
@@ -681,9 +679,9 @@ class PatchclampSealTestUI(QWidget):
         self.outCurGain = float(gain)
 
     def changeProbeGain(self, gain):
-        if gain == "100M\u03A9":
+        if gain == "100M\u03a9":
             self.probeGain = 100 * 10**6
-        elif gain == "10G\u03A9":
+        elif gain == "10G\u03a9":
             self.probeGain = 10 * 10**9
 
     def zap(self):

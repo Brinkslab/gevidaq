@@ -10,6 +10,7 @@ READIN TASK HAS TO START AHEAD OF READ MANY SAMPLES, OTHERWISE ITS NOT in SYN!!!
 # The adaptive NI DAQ tool
 
 import os
+import time
 from datetime import datetime
 
 import nidaqmx
@@ -24,10 +25,6 @@ from .constants import NiDaqChannels
 class DAQmission(
     QThread
 ):  # For all-purpose Nidaq tasks, use "Dev1/ai22" as reference channel.
-    """
-    # For all-purpose Nidaq tasks. Use "Dev1/ai22" as reference channel.
-    # 'Specification' is the wrong spelling of 'Specification'.
-    """
 
     collected_data = pyqtSignal(np.ndarray)
     finishSignal = pyqtSignal()
@@ -93,6 +90,47 @@ class DAQmission(
             writingtask.do_channels.add_do_chan(self.channelname)
             writingtask.write(writting_value)
 
+    def sendServoSignal(self, servo_channel: str, open_servo: bool):
+        """
+        Opens (open_servo=True), or closes (open_servo=False) the beam path servo_channel.
+        """
+        print(servo_channel, open_servo)
+        sample_rate = 50000
+        total_duration = 0.25
+        frequency = 50
+
+        # set signal parameters
+        if open_servo:
+            high_time = 0.002
+            low_time = 0.018
+        if not open_servo:
+            high_time = 0.001
+            low_time = 0.019
+
+        num_cycles = int(total_duration * frequency)
+
+        high_samples = int(high_time * sample_rate)
+        low_samples = int(low_time * sample_rate)
+        pulse = [True] * high_samples + [False] * low_samples
+        signal = pulse * num_cycles
+
+        # write waveform
+        self.channelname = self.channel_LUT[servo_channel]
+
+        with nidaqmx.Task() as writingtask:
+            writingtask.do_channels.add_do_chan(
+                self.channelname,
+                line_grouping=nidaqmx.constants.LineGrouping.CHAN_FOR_ALL_LINES,
+            )
+            writingtask.timing.cfg_samp_clk_timing(
+                sample_rate,
+                sample_mode=nidaqmx.constants.AcquisitionType.FINITE,
+                samps_per_chan=len(signal),
+            )
+            writingtask.write(signal, auto_start=False)
+            writingtask.start()
+            time.sleep(total_duration)
+
     def runWaveforms(
         self,
         clock_source,
@@ -132,7 +170,7 @@ class DAQmission(
         self.readin_channels = readin_channels
         self.sampling_rate = sampling_rate
 
-        # galvosx and galvosy as specification key words are already enough.
+        # galvosx and galvosy as Sepcification key words are already enough.
 
         # Get the average number and y pixel number information from data
         self.galvosx_originalkey = "galvosx"

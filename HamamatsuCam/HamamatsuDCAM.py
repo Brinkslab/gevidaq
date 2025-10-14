@@ -508,6 +508,7 @@ class HamamatsuCamera(object):
         """
         frames = []
         for n in self.newFrames():
+
             paramlock = DCAMBUF_FRAME(
                 0, 0, 0, n, None, 0, 0, 0, 0, 0, 0, 0, 0, 0
             )
@@ -706,15 +707,6 @@ class HamamatsuCamera(object):
 
         return [prop_value, prop_type]
 
-    def isCameraProperty(self, property_name):
-        """
-        Check if a property name is supported by the camera.
-        """
-        if property_name in self.properties:
-            return True
-        else:
-            return False
-
     def newFrames(self):
         """
         Return a list of the ids of all the new frames since the last check.
@@ -868,12 +860,13 @@ class HamamatsuCamera(object):
         # If the ROI is smaller than the entire frame turn on subarray mode
         if (roi_w == self.max_width) and (roi_h == self.max_height):
             self.setPropertyValue("subarray_mode", "OFF")
-            print("Set subarray_mode OFF.")
         else:
             self.setPropertyValue("subarray_mode", "ON")
             print("Set subarray_mode ON.")
 
-    def setACQMode(self, mode, number_frames=None):
+    def setACQMode(
+        self, mode, number_frames=None, additional_buffer_factor=1.0
+    ):
         """
         Set the acquisition mode to either run until aborted or to
         stop after acquiring a set number of frames.
@@ -888,6 +881,7 @@ class HamamatsuCamera(object):
         ):
             self.acquisition_mode = mode
             self.number_frames = number_frames
+            self.additional_buffer_factor = additional_buffer_factor
         else:
             raise DCAMException("Unrecognized acqusition mode: " + mode)
 
@@ -1033,22 +1027,25 @@ class HamamatsuCameraMR(HamamatsuCamera):
         self.captureSetup()
 
         # Allocate new image buffers if necessary. This will allocate
-        # as many frames as can fit in 2GB of memory, or 2000 frames,
+        # as many frames as can fit in 4GB of memory, or 4000 frames,
         # which ever is smaller. The problem is that if the frame size
-        # is small than a lot of buffers can fit in 2GB. Assuming that
-        # the camera maximum speed is something like 1KHz 2000 frames
-        # should be enough for 2 seconds of storage, which will hopefully
+        # is small than a lot of buffers can fit in 4GB. Assuming that
+        # the camera maximum speed is something like 1KHz 4000 frames
+        # should be enough for 4 seconds of storage, which will hopefully
         # be long enough.
         #
         if (self.old_frame_bytes != self.frame_bytes) or (
             self.acquisition_mode == "fixed_length"
         ):
+
             n_buffers = min(
                 int((4.0 * 1024 * 1024 * 1024) / self.frame_bytes), 4000
             )
             print("Frame size: {} MB.".format(self.frame_bytes / 1024 / 1024))
             if self.acquisition_mode == "fixed_length":
-                self.number_image_buffers = self.number_frames
+                self.number_image_buffers = int(
+                    self.number_frames * self.additional_buffer_factor
+                )
             else:
                 self.number_image_buffers = n_buffers
 
@@ -1069,9 +1066,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
                 hc_data = HCamData(
                     self.frame_bytes
                 )  # For each frame we allocate a numpy.ascontiguousarray buffer.
-                self.hcam_ptr[
-                    i
-                ] = (
+                self.hcam_ptr[i] = (
                     hc_data.getDataPtr()
                 )  # Configure each frame memory pointer.
                 self.hcam_data.append(
@@ -1081,7 +1076,7 @@ class HamamatsuCameraMR(HamamatsuCamera):
             self.old_frame_bytes = self.frame_bytes
 
             print(
-                "Buffer assigned: {} Gigabybtes.".format(
+                "Buffer assigned: {} Gigabytes.".format(
                     self.number_image_buffers
                     * self.frame_bytes
                     / 1024
@@ -1135,21 +1130,16 @@ class HamamatsuCameraMR(HamamatsuCamera):
         print("Acquisition starts at {} s.".format(self.AcquisitionStartTime))
 
     def stopAcquisition(self):
-        """
-        Stop data acquisition and release the memory associates with the frames.
-        """
+        """Stop data acquisition and release the memory associates with the frames."""
 
         # Stop acquisition.
         self.checkStatus(dcam.dcamcap_stop(self.camera_handle), "dcamcap_stop")
 
-        # Release image buffers.
-        if self.hcam_ptr:
-            self.checkStatus(
-                dcam.dcambuf_release(
-                    self.camera_handle, DCAMBUF_ATTACHKIND_FRAME
-                ),
-                "dcambuf_release",
-            )
+        # Release all image buffers.
+        self.checkStatus(
+            dcam.dcambuf_release(self.camera_handle, DCAMBUF_ATTACHKIND_FRAME),
+            "dcambuf_release",
+        )
 
         print("max camera backlog was:", self.max_backlog)
         self.max_backlog = 0
@@ -1252,6 +1242,7 @@ class HamamatsuCameraRE(HamamatsuCamera):
         if (self.old_frame_bytes != self.frame_bytes) or (
             self.acquisition_mode == "fixed_length"
         ):
+
             n_buffers = min(
                 int((2.0 * 1024 * 1024 * 1024) / self.frame_bytes), 2000
             )
@@ -1309,7 +1300,7 @@ class HamamatsuCameraRE(HamamatsuCamera):
                 paramRecWaitStart.size = ctypes.sizeof(paramRecWaitStart)
 
                 RECStop = False
-                while RECStop is not True:
+                while RECStop != True:
                     fn_return = dcam.dcamwait_start(  # TODO unused
                         self.wait_handle, ctypes.byref(paramRecWaitStart)
                     )
@@ -1384,10 +1375,11 @@ class HamamatsuCameraRE(HamamatsuCamera):
 # Testing.
 #
 if __name__ == "__main__":
+
     import random
 
     import numpy as np
-    import skimage.external.tifffile as skimtiff
+    import tifffile as skimtiff
 
     #
     # Initialization
@@ -1412,7 +1404,9 @@ if __name__ == "__main__":
     # True: Streaming to disk while capturing.
 
     if n_cameras > 0:
+
         if Streaming_to_disk is False:
+
             hcam = HamamatsuCameraMR(camera_id=0)
             print(hcam.setPropertyValue("defect_correct_mode", 1))
             print("camera 0 model:", hcam.getModelInfo(0))
@@ -1581,6 +1575,7 @@ if __name__ == "__main__":
             hcam.shutdown()
 
         elif Streaming_to_disk is True:
+
             rcam = HamamatsuCameraRE(
                 path="M:\\tnw\\ist\\do\\projects\\Neurophotonics\\Brinkslab\\People\\Xin Meng\\Code\\Python_test\\HamamatsuCam\\test_fullframe",  # TODO hardcoded path
                 ext="dcimg",
