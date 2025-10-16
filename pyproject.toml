@@ -49,12 +49,14 @@ dependencies= [
 
 [tool.setuptools.package-data]
 gevidaq = [
-  "Icons/*.png",
-  "Icons/*.gif",
-  "HamamatsuCam/19_12/dcamapi.dll",
-  "ThorlabsKCube/Thorlabs.MotionControl.KCube.BrushlessMotor.dll",
-  "PI_ObjectiveMotor/PI_GCS2_DLL_x64.dll",
+  "CoordinatesManager/Registration/*",
   "CoordinatesManager/x64/alp4395.dll",
+  "HamamatsuCam/19_12/dcamapi.dll",
+  "Icons/*.gif",
+  "Icons/*.png",
+  "PI_ObjectiveMotor/PI_GCS2_DLL_x64.dll",
+  "PatchClamp/autopatch_configuration.txt",
+  "ThorlabsKCube/Thorlabs.MotionControl.KCube.BrushlessMotor.dll",
 ]
 
 [project.urls]
