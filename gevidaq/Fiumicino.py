@@ -27,7 +27,7 @@ import sys
 import pyqtgraph as pg
 import pyqtgraph.console
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QSize
+from PyQt5.QtCore import QSize, pyqtSignal
 from PyQt5.QtGui import QFont, QIcon, QTextCursor
 
 from . import (
@@ -49,6 +49,9 @@ from . import (
 
 
 class Mainbody(QtWidgets.QWidget):
+
+    savedirectory_changed = pyqtSignal(str)
+
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
@@ -66,10 +69,15 @@ class Mainbody(QtWidgets.QWidget):
         # GUI for right tabs panel-Creating instances of each widget showing on right side tabs.
         """
         self.tabs = QtWidgets.QTabWidget()
-        self.Camera_WidgetInstance = HamamatsuCam.HamamatsuUI.CameraUI()
         self.Galvo_WidgetInstance = GalvoWidget.PMTWidget.PMTWidgetUI()
         self.Waveformer_WidgetInstance = (
             NIDAQ.WaveformWidget.WaveformGenerator()
+        )
+        self.Camera_WidgetInstance = HamamatsuCam.HamamatsuUI.CameraUI(
+            self.Galvo_WidgetInstance, self.Waveformer_WidgetInstance
+        )
+        self.savedirectory_changed.connect(
+            self.Camera_WidgetInstance.update_savedirectory
         )
         self.PatchClamp_WidgetInstance = (
             PatchClamp.ui_patchclamp_sealtest.PatchclampSealTestUI()
@@ -383,12 +391,13 @@ class Mainbody(QtWidgets.QWidget):
     def set_saving_directory(self):
         self.savedirectory = str(
             QtWidgets.QFileDialog.getExistingDirectory(
-                caption="Set saving directory",
-                directory=""
-                # options = QFileDialog.DontUseNativeDialog
+                caption="Set saving directory", directory=""
             )
         )
         self.savedirectorytextbox.setText(self.savedirectory)
+
+        # Emit the signal to notify other widgets
+        self.savedirectory_changed.emit(self.savedirectory)
 
         # Assert saving directories in other widgets
         self.Galvo_WidgetInstance.savedirectory = self.savedirectory
@@ -401,6 +410,9 @@ class Mainbody(QtWidgets.QWidget):
 
     def update_saving_directory(self):
         self.savedirectory = str(self.savedirectorytextbox.text())
+
+        # Emit the signal to notify other widgets
+        self.savedirectory_changed.emit(self.savedirectory)
 
     def set_prefix(self):
         self.saving_prefix = str(self.prefixtextbox.text())

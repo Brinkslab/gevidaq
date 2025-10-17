@@ -23,9 +23,7 @@ def xValuesSingleSawtooth(
     constants = HardwareConstants()
     speedGalvo = constants.maxGalvoSpeed  # Volt/s
     aGalvo = constants.maxGalvoAccel  # Acceleration galvo in volt/s^2
-    aGalvoPix = aGalvo / (
-        sampleRate**2
-    )  # Acceleration galvo in volt/pixel^2
+    aGalvoPix = aGalvo / (sampleRate**2)  # Acceleration galvo in volt/pixel^2
     xArray = np.array([])  # Array for x voltages
     rampUpSpeed = (
         voltXMax - voltXMin
@@ -523,7 +521,7 @@ class generate_AO:
                 (self.waveperiod_2 / 1000) * self.Daq_sample_rate
             ),  # time domain
             at=np.array(
-                [(self.start_time_2 * self.Daq_sample_rate)]
+                [self.start_time_2 * self.Daq_sample_rate]
             ),  # times of pulses
             shape=rect(self.shape * self.Daq_sample_rate),  # shape of pulse
         )

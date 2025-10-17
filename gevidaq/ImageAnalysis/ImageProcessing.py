@@ -385,10 +385,7 @@ class ProcessImage:
                     np.where(contour_mask_thin_line == 1)[0]
                 )
                 Roundness = (
-                    4
-                    * math.pi
-                    * filled_mask_area
-                    / contour_mask_perimeter**2
+                    4 * math.pi * filled_mask_area / contour_mask_perimeter**2
                 )
 
                 # Roundness Threshold
@@ -1326,12 +1323,8 @@ class ProcessImage:
 
             # === speed and accelation check ===
             time_gap = 1 / sampling_rate
-            contour_x_acceleration = (
-                np.diff(X_interpolated, n=2) / time_gap**2
-            )
-            contour_y_acceleration = (
-                np.diff(Y_interpolated, n=2) / time_gap**2
-            )
+            contour_x_acceleration = np.diff(X_interpolated, n=2) / time_gap**2
+            contour_y_acceleration = np.diff(Y_interpolated, n=2) / time_gap**2
 
             if AccelerationGalvo < np.amax(abs(contour_x_acceleration)):
                 logging.info(
@@ -1658,13 +1651,13 @@ class ProcessImage:
                 list_of_rois_transformed.append(vertices_assemble)
                 logging.info("Warning: not registered")
 
-            mask_transformed[
-                laser
-            ] = ProcessImage.CreateBinaryMaskFromRoiCoordinates(
-                list_of_rois_transformed,
-                fill_contour=flag_fill_contour,
-                contour_thickness=contour_thickness,
-                invert_mask=flag_invert_mode,
+            mask_transformed[laser] = (
+                ProcessImage.CreateBinaryMaskFromRoiCoordinates(
+                    list_of_rois_transformed,
+                    fill_contour=flag_fill_contour,
+                    contour_thickness=contour_thickness,
+                    invert_mask=flag_invert_mode,
+                )
             )
             logging.info(mask_transformed[laser].shape)
 
@@ -3268,9 +3261,9 @@ class ProcessImage:
         # At each pixel position, generate a percentage weight of this pixel, e.g., 0 for background pixels.
         weightimage = weightimage / np.mean(weightimage)
 
-        estimate_DV[
-            np.isnan(estimate_DV)
-        ] = 0  # Set places where imgs2 == NaN to zero
+        estimate_DV[np.isnan(estimate_DV)] = (
+            0  # Set places where imgs2 == NaN to zero
+        )
 
         return corrimage, weightimage, sigmaimage
 
@@ -5067,9 +5060,9 @@ class ProcessImage:
                                 * (1 - fast_time_constant_percentage)
                             )
 
-                            column_values[
-                                each_content_index
-                            ] = overall_time_constant
+                            column_values[each_content_index] = (
+                                overall_time_constant
+                            )
 
                 # Get rid of the nan
                 column_values = [x for x in column_values if str(x) != "nan"]
@@ -6083,9 +6076,9 @@ class CurveFit:
         # True values        = values belonging top of square wave
         # False values       = values belonging to bottom of square wave
         self.waveform = self.waveform > self.midpoint
-        self.waveform[
-            :2
-        ] = True  # This line is redundant if you skip the first 7 values of the waveform
+        self.waveform[:2] = (
+            True  # This line is redundant if you skip the first 7 values of the waveform
+        )
         self.waveform_time_matrix = np.column_stack(
             (self.waveform, self.timewaveform)
         )
@@ -7118,101 +7111,3 @@ class CurveFit:
 
         logging.info(self.avg_intensity_ratio)
         return self.avg_intensity_ratio, self.std_intensity_ratio
-
-
-if __name__ == "__main__":
-    stitch_img = False
-    retrievefocus_map = False
-    find_focus = False
-    registration = False
-    merge_dataFrames = False
-    cam_screening_analysis = False
-    photo_current = False
-    PMT_contour_scan_processing = True
-    screening_comparison = False
-
-    if stitch_img is True:
-        Nest_data_directory = r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2022-06-10  Evolution screening validation\WT\2022-06-10_16-26-51_WT_pmt"  # TODO hardcoded path
-        Stitched_image_dict = ProcessImage.image_stitching(
-            Nest_data_directory, scanning_coord_step=1568, row_data_folder=True
-        )
-
-        for key in Stitched_image_dict:
-            r2 = Stitched_image_dict[key]
-            row_image = Image.fromarray(r2)
-            row_image.save(
-                os.path.join(
-                    Nest_data_directory, "{} stitched.tif".format(key)
-                )
-            )
-
-    elif retrievefocus_map is True:
-        Nest_data_directory = r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2020-11-5 Lib z3_2p5um 9coords AF gap3"  # TODO hardcoded path
-        focus_map_dict = ProcessImage.retrieve_focus_map(Nest_data_directory)
-
-    elif find_focus is True:
-        ProcessImage.find_infocus_from_stack(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Xin\2021-08-12 camera focus\fov3",  # TODO hardcoded path
-            method="variance_of_laplacian",
-            save_image=False,
-        )
-
-    elif registration is True:
-        data_1_xlsx = pd.ExcelFile(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2020-11-17 photobleaching WT LentiII\Round2_2020-11-20_17-29-19_CellsProperties.xlsx"  # TODO hardcoded path
-        )
-        data_1 = pd.read_excel(data_1_xlsx)
-        data_2_xlsx = pd.ExcelFile(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2020-11-17 photobleaching WT LentiII\Round3_2020-11-20_17-32-28_CellsProperties.xlsx"  # TODO hardcoded path
-        )
-        data_2 = pd.read_excel(data_2_xlsx)
-        data_3_xlsx = pd.ExcelFile(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2020-11-17 photobleaching WT LentiII\Round4_2020-11-20_17-35-24_CellsProperties.xlsx"  # TODO hardcoded path
-        )
-        data_3 = pd.read_excel(data_3_xlsx)
-
-        registered_dataframe = ProcessImage.Register_cells(
-            [data_1, data_2, data_3]
-        )
-    elif merge_dataFrames is True:
-        data_1_xlsx = pd.ExcelFile(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2021-01-27 Lib8 Archon KCl 8b8 ND1p5ND0p3\m1.xlsx"  # TODO hardcoded path
-        )
-        data_1 = pd.read_excel(data_1_xlsx)
-        data_2_xlsx = pd.ExcelFile(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2021-01-27 Lib8 Archon KCl 8b8 ND1p5ND0p3\m2.xlsx"  # TODO hardcoded path
-        )
-        data_2 = pd.read_excel(data_2_xlsx)
-
-        logging.info("Start Cell_DataFrame_Merging.")
-        Cell_DataFrame_Merged = ProcessImage.MergeDataFrames(
-            data_1, data_2, method="Kcl"
-        )
-        logging.info("Cell_DataFrame_Merged.")
-
-        DataFrames_filtered = ProcessImage.FilterDataFrames(
-            Cell_DataFrame_Merged, 0.2, 1
-        )
-        DataFrames_filtered.to_excel(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2021-01-27 Lib8 Archon KCl 8b8 ND1p5ND0p3\m3.xlsx"  # TODO hardcoded path
-        )
-
-    elif cam_screening_analysis is True:
-        ProcessImage.cam_screening_post_processing(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Delizzia\2020-11-19_2020-11-19_10-14-32_trial_cam_screen"  # TODO hardcoded path
-        )
-
-    elif photo_current is True:
-        ProcessImage.PhotoCurrent(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-07 GR mutants\E166Q\CELL5\Photocurrent"
-        )  # TODO hardcoded path
-
-    elif PMT_contour_scan_processing is True:
-        fluorescence_trace_normalized_for_average = ProcessImage.CurveFit_PMT(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-04 2p Patch\QuasAr1\CELL3\ND1\PMT_array_2021-08-04_14-39-35.npy",  # TODO hardcoded path
-            number_of_periods=25,
-        )
-    elif screening_comparison is True:
-        ProcessImage.Screening_boxplot(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2022-06-14 evolution screening H106R\data collection ratio.xlsx"
-        )  # TODO hardcoded path

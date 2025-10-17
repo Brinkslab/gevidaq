@@ -13,9 +13,9 @@ from PyQt5 import QtWidgets
 from PyQt5.QtCore import Qt, pyqtSignal
 from PyQt5.QtGui import QColor, QFont, QPalette
 from PyQt5.QtWidgets import (
+    QDoubleSpinBox,
     QGridLayout,
     QLabel,
-    QDoubleSpinBox,
     QSlider,
     QStackedLayout,
     QWidget,
