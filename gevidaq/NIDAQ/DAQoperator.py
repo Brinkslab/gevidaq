@@ -352,7 +352,12 @@ class DAQmission(QThread):
         # Analog signal in Dev 1 is involved
         """
         if Dev1_analog_channel_number != 0:
-            with nidaqmx.Task() as slave_Task_1_analog_dev1, nidaqmx.Task() as slave_Task_1_analog_dev2, nidaqmx.Task() as master_Task_readin, nidaqmx.Task() as slave_Task_2_digitallines:
+            with (
+                nidaqmx.Task() as slave_Task_1_analog_dev1,
+                nidaqmx.Task() as slave_Task_1_analog_dev2,
+                nidaqmx.Task() as master_Task_readin,
+                nidaqmx.Task() as slave_Task_2_digitallines,
+            ):
                 # === adding channels ===
                 # Set tasks from different devices apart
                 for i in range(Dev1_analog_channel_number):
@@ -669,7 +674,11 @@ class DAQmission(QThread):
             # Only Dev 2 is involved  in sending analog signals
             """
         elif Dev2_analog_channel_number != 0:
-            with nidaqmx.Task() as slave_Task_1_analog_dev2, nidaqmx.Task() as master_Task_readin, nidaqmx.Task() as slave_Task_2_digitallines:
+            with (
+                nidaqmx.Task() as slave_Task_1_analog_dev2,
+                nidaqmx.Task() as master_Task_readin,
+                nidaqmx.Task() as slave_Task_2_digitallines,
+            ):
                 # adding channels
                 # Set tasks from different devices apart
                 slave_Task_2_digitallines.do_channels.add_do_chan(

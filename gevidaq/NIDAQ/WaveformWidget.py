@@ -1961,11 +1961,11 @@ class WaveformGenerator(QWidget):
                 # Cut or append 0 to the data for non-reference waveforms.
                 len_waveform_data = len(self.waveform_data_dict[waveform_key])
                 if len_waveform_data >= self.reference_length:
-                    self.waveform_data_dict[
-                        waveform_key
-                    ] = self.waveform_data_dict[waveform_key][
-                        0 : self.reference_length
-                    ]
+                    self.waveform_data_dict[waveform_key] = (
+                        self.waveform_data_dict[waveform_key][
+                            0 : self.reference_length
+                        ]
+                    )
                 else:
                     if (
                         self.waveform_data_dict[waveform_key].dtype
@@ -1989,16 +1989,16 @@ class WaveformGenerator(QWidget):
                     len(self.waveform_data_dict[waveform_key][0, :])
                     >= self.reference_length
                 ):
-                    self.waveform_data_dict[waveform_key][
-                        0, :
-                    ] = self.waveform_data_dict[waveform_key][0, :][
-                        0 : self.reference_length
-                    ]
-                    self.waveform_data_dict[waveform_key][
-                        1, :
-                    ] = self.waveform_data_dict[waveform_key][1, :][
-                        0 : self.reference_length
-                    ]
+                    self.waveform_data_dict[waveform_key][0, :] = (
+                        self.waveform_data_dict[waveform_key][0, :][
+                            0 : self.reference_length
+                        ]
+                    )
+                    self.waveform_data_dict[waveform_key][1, :] = (
+                        self.waveform_data_dict[waveform_key][1, :][
+                            0 : self.reference_length
+                        ]
+                    )
 
                 else:
                     append_waveforms = np.zeros(
@@ -2045,12 +2045,12 @@ class WaveformGenerator(QWidget):
             del self.waveform_data_dict["galvos"]
 
         if "galvos_contour" in self.waveform_data_dict:
-            self.waveform_data_dict[
-                "galvos_X" + "_contour"
-            ] = self.waveform_data_dict["galvos_contour"][0, :]
-            self.waveform_data_dict[
-                "galvos_Y" + "_contour"
-            ] = self.waveform_data_dict["galvos_contour"][1, :]
+            self.waveform_data_dict["galvos_X" + "_contour"] = (
+                self.waveform_data_dict["galvos_contour"][0, :]
+            )
+            self.waveform_data_dict["galvos_Y" + "_contour"] = (
+                self.waveform_data_dict["galvos_contour"][1, :]
+            )
             del self.waveform_data_dict["galvos_contour"]
 
         # Structured array to contain
