@@ -7240,7 +7240,7 @@ if __name__ == "__main__":
 
     elif photo_current is True:
         ProcessImage.PhotoCurrent(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-07 GR mutants\E166Q\CELL5\Photocurrent"
+            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Patch clamp\2021-08-07 GR mutants\E166Q\CELL5\Photocurrent"  # TODO hardcoded path
         )  # TODO hardcoded path
 
     elif PMT_contour_scan_processing is True:
@@ -7250,5 +7250,5 @@ if __name__ == "__main__":
         )
     elif screening_comparison is True:
         ProcessImage.Screening_boxplot(
-            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2022-06-14 evolution screening H106R\data collection ratio.xlsx"
-        )  # TODO hardcoded path
+            r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Octoscope\Evolution screening\2022-06-14 evolution screening H106R\data collection ratio.xlsx"  # TODO hardcoded path
+        )
