@@ -57,13 +57,13 @@ class DAQmission(QThread):
 
         """
 
-        self.channelname = self.channel_LUT[channel]
-        self.writting_value = value
+        channelname = self.channel_LUT[channel]
+        writing_value = value
 
         # Assume that dev1 is always employed
         with nidaqmx.Task() as writingtask:
-            writingtask.ao_channels.add_ao_voltage_chan(self.channelname)
-            writingtask.write(self.writting_value)
+            writingtask.ao_channels.add_ao_voltage_chan(channelname)
+            writingtask.write(writing_value)
 
     def sendSingleDigital(self, channel, value):
         """
@@ -80,15 +80,15 @@ class DAQmission(QThread):
 
         """
 
-        self.channelname = self.channel_LUT[channel]
+        channelname = self.channel_LUT[channel]
         if value is True:
-            writting_value = np.array([1], dtype=bool)
+            writing_value = np.array([1], dtype=bool)
         else:
-            writting_value = np.array([0], dtype=bool)
+            writing_value = np.array([0], dtype=bool)
 
         with nidaqmx.Task() as writingtask:
-            writingtask.do_channels.add_do_chan(self.channelname)
-            writingtask.write(writting_value)
+            writingtask.do_channels.add_do_chan(channelname)
+            writingtask.write(writing_value)
 
     def sendServoSignal(self, servo_channel: str, open_servo: bool):
         """
@@ -115,11 +115,11 @@ class DAQmission(QThread):
         signal = pulse * num_cycles
 
         # write waveform
-        self.channelname = self.channel_LUT[servo_channel]
+        channelname = self.channel_LUT[servo_channel]
 
         with nidaqmx.Task() as writingtask:
             writingtask.do_channels.add_do_chan(
-                self.channelname,
+                channelname,
                 line_grouping=nidaqmx.constants.LineGrouping.CHAN_FOR_ALL_LINES,
             )
             writingtask.timing.cfg_samp_clk_timing(
