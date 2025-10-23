@@ -10,12 +10,14 @@ from skimage.measure import find_contours
 
 
 class ImageAnalyzer:
-    def __init__(self, file_path, intensity_threshold=3000):
+    def __init__(self, file_path=None, intensity_threshold=3000):
 
         # Load the TIFF image
-        image = skimtiff.imread(file_path)
-        self.tiff_image = image
-        self.image_dimension = (0, self.tiff_image.shape[1])
+        if file_path:
+            image = skimtiff.imread(file_path)
+            self.tiff_image = image
+            self.image_dimension = (0, self.tiff_image.shape[1])
+
         self.intensity_threshold = intensity_threshold
 
     def update_threshold(self, val):
@@ -207,7 +209,7 @@ class ImageAnalyzer:
 
 if __name__ == "__main__":
     image_analyzer = ImageAnalyzer(
-        r"M:/tnw/ist/do/projects/Neurophotonics/Brinkslab/People/Xin Meng/Code/Python_test_TF2/cell0000.TIF"
+        r"M:/tnw/ist/do/projects/Neurophotonics/Brinkslab/People/Xin Meng/Code/Python_test_TF2/cell0000.TIF"  # TODO hardcoded path
     )
 
     # Analyze and display the image

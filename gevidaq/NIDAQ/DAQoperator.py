@@ -94,7 +94,6 @@ class DAQmission(QThread):
         """
         Opens (open_servo=True), or closes (open_servo=False) the beam path servo_channel.
         """
-        logging.info(servo_channel, open_servo)
         sample_rate = 50000
         total_duration = 0.25
         frequency = 50

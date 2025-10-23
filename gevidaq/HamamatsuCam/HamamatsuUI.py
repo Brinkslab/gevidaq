@@ -631,8 +631,7 @@ class CameraUI(QMainWindow):
         """
 
         # Create an instance of the ImageAnalyzer class
-        file_path = r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Nike\cell0000.tif"
-        self.image_analyzer = ImageAnalyzer(file_path)
+        self.image_analyzer = ImageAnalyzer()
         self.registrationPoints = CameraPmtRegistrationPoints()
 
         # Connect the output_signal_camera_pmt_contour signal to the handleoutput_signal_camera_pmt_contour slot
@@ -1831,7 +1830,7 @@ class CameraUI(QMainWindow):
         else:
             self.Live_item_autolevel = False
 
-        logging.info("AutoLevelSwitchEvent: ", self.Live_item_autolevel)
+        logging.info(f"AutoLevelSwitchEvent: {self.Live_item_autolevel}")
 
     def LiveSwitchEvent(self):
         if self.LiveButton.isChecked():
@@ -2707,7 +2706,7 @@ class CameraUI(QMainWindow):
                 for pos in ROIHandlePositions
             ]
         )
-        logging.info("ROI positions:", final_contour)
+        logging.info(f"ROI positions: {final_contour}")
 
         # Interpolate the final contour points
         def interpolate_points(p1, p2, num_points):
