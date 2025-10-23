@@ -108,7 +108,7 @@ class AOTFLaserUI(QWidget):
 
     def shutter_CW_action(self):
         daq = DAQmission()
-        daq.sendServoSignal(self.servo_name, self.shutterButton.isChecked())
+        daq.sendServoSignal(self.servo_channel, self.shutterButton.isChecked())
 
 
 class AOTFWidgetUI(QWidget):
