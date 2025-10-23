@@ -1836,8 +1836,8 @@ class CameraUI(QMainWindow):
         if self.LiveButton.isChecked():
             try:
                 self.ResetLiveImgView()
-            except Exception as e:
-                logging.error(f"Error resetting live image view: {e}")
+            except Exception as exc:
+                logging.error("Error resetting live image view:", exc_info=exc)
 
             self.live_thread = QThread()
             self.live_worker = LiveWorker(self.hcam, self.live_update_interval)
@@ -1900,10 +1900,10 @@ class CameraUI(QMainWindow):
                     and self.ROIselector_ispresented is False
                 ):
                     tiff_image = block_reduce(
-                        image,
+                        tiff_image,
                         block_size=(2, 2),
                         func=np.mean,
-                        cval=np.mean(image),
+                        cval=np.mean(tiff_image),
                     )
 
             self.Live_item.setImage(
@@ -1936,12 +1936,12 @@ class CameraUI(QMainWindow):
                 and self.ShowROIImgSwitch is True
             ):
                 self.ShowROIitem.setImage(
-                    self.ROIitem.getArrayRegion(image, self.Live_item),
+                    self.ROIitem.getArrayRegion(tiff_image, self.Live_item),
                     autoLevels=None,
                 )
 
-        except Exception as e:
-            logging.info(f"Error displaying TIFF image: {e}")
+        except Exception as exc:
+            logging.info("Error displaying TIFF image:", exc_info=exc)
 
     def refresh_live_image(self, image):
         self.Live_image = image
@@ -2345,8 +2345,11 @@ class CameraUI(QMainWindow):
                     self.Live_item.scene().sigMouseClicked.disconnect(
                         self.mouse_click_connection
                     )
-                except Exception as e:
-                    logging.info(f"Error disconnecting mouse click event: {e}")
+                except Exception as exc:
+                    logging.info(
+                        "Error disconnecting mouse click event:", exc_info=exc
+                    )
+
                 self.mouse_click_connection = None
 
             logging.info("Image cleared successfully.")
@@ -2355,8 +2358,8 @@ class CameraUI(QMainWindow):
             self._set_registration_params(False)
             self._remove_registration_gaussian(remove=True)
 
-        except Exception as e:
-            logging.info(f"Error clearing image: {e}")
+        except Exception as exc:
+            logging.info("Error clearing image:", exc_info=exc)
 
     def enable_pixel_coordinate_display(self):
         if self.Live_image is None:
@@ -2369,8 +2372,10 @@ class CameraUI(QMainWindow):
                 self.Live_item.scene().sigMouseClicked.disconnect(
                     self.mouse_click_connection
                 )
-            except Exception as e:
-                logging.info(f"Error disconnecting mouse click event: {e}")
+            except Exception as exc:
+                logging.info(
+                    "Error disconnecting mouse click event:", exc_info=exc
+                )
 
         # Connect the mouse click event to the handler
         self.mouse_click_connection = (
@@ -2961,8 +2966,9 @@ class StreamingWorker(QObject):
                             f"Recording, {self.image_count} frames.."
                         )
                 self.stop_streaming()
-        except Exception as e:
-            self.error.emit(str(e))
+        except Exception as exc:
+            logging.info("Error while streaming", exc_info=exc)
+            self.error.emit("streaming error")
         finally:
             self.streaming_finished.emit()
             self.finished.emit()
@@ -3002,8 +3008,8 @@ class LiveWorker(QObject):
                     logging.debug(f"Frame acquired: {live_image.shape}")
                 else:
                     logging.warning("No frames retrieved from the camera.")
-            except Exception as e:
-                logging.error(f"Error during live acquisition: {e}")
+            except Exception as exc:
+                logging.error("Error during live acquisition:", exc_info=exc)
                 self.camera_is_live = False
 
             time.sleep(self.live_update_interval)
@@ -3029,8 +3035,8 @@ class LiveWorker(QObject):
                 logging.debug(f"Snap image acquired: {snap_image.shape}")
             else:
                 logging.warning("No frames retrieved from the camera.")
-        except Exception as e:
-            logging.error(f"Error during snapping: {e}")
+        except Exception as exc:
+            logging.error("Error during snapping:", exc_info=exc)
         finally:
             self.hcam.stopAcquisition()
             self.snapping = False
@@ -3085,9 +3091,9 @@ class SaveWorker(QObject):
             )
             self.finished.emit()
 
-        except Exception as e:
-            logging.error(f"Error during save operation: {e}")
-            self.error.emit(str(e))
+        except Exception as exc:
+            logging.error("Error during save operation:", exc_info=exc)
+            self.error.emit("error during save")
 
 
 if __name__ == "__main__":

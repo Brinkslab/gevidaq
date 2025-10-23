@@ -1183,8 +1183,8 @@ class PMTWidgetUI(QWidget):
                 yMax=tiff_image.shape[0],
             )
 
-        except Exception as e:
-            logging.info(f"Error displaying TIFF image: {e}")
+        except Exception as exc:
+            logging.info("Error displaying TIFF image:", exc_info=exc)
 
     def update_pixel_coords_and_intensity(self, event):
         """Update the pixel coordinates and intensity values."""

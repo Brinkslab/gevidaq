@@ -1560,9 +1560,9 @@ class WaveformGenerator(QWidget):
             self.uiwavefrequency_digital_waveform = float(
                 self.DigFreqTextbox.text()
             )
-        except Exception as e:
+        except Exception as exc:
             logging.info("IGNORE if using SERVO")
-            logging.info(f"Error missing frequency, {e}")
+            logging.info("Error missing frequency", exc_info=exc)
 
         if not self.DigOffsetTextbox.text():
             self.uiwaveoffset_digital_waveform = 0
