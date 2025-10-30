@@ -587,7 +587,7 @@ class CoordinatesWidgetUI(QWidget):
         # Initialize the detector instance and load the model.
         from ..ImageAnalysis.ImageProcessing_MaskRCNN import ProcessImageML
 
-        self.ProcessML = ProcessImageML(  # TODO undefined
+        self.ProcessML = ProcessImageML(
             WeigthPath=r"M:\tnw\ist\do\projects\Neurophotonics\Brinkslab\Data\Martijn\SpikingHek.h5"  # TODO hardcoded path
         )
         self.MessageBack.emit("Mask-RCNN environment configured.")

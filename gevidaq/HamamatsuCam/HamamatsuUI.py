@@ -32,17 +32,14 @@ from PyQt5.QtWidgets import (
     QButtonGroup,
     QComboBox,
     QDoubleSpinBox,
-    QFileDialog,
     QGridLayout,
     QGroupBox,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMainWindow,
     QMessageBox,
     QProgressBar,
     QPushButton,
-    QSlider,
     QSpinBox,
     QStackedWidget,
     QStyleFactory,
@@ -3181,8 +3178,6 @@ class SaveWorker(QObject):
 
 
 if __name__ == "__main__":
-    import GalvoWidget.PMTWidget
-    import NIDAQ.WaveformWidget
 
     def run_app(pmt_widget_ui=None, waveform_widget_ui=None):
         app = QtWidgets.QApplication(sys.argv)
