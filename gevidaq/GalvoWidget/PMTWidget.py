@@ -67,6 +67,7 @@ class PMTWidgetUI(QWidget):
 
         self.clicked_points_list = []
         self.flag_is_drawing = False
+
         # === GUI for PMT tab ===
         pmtimageContainer = StylishQT.roundQGroupBox(title="PMT image")
         self.pmtimageLayout = QGridLayout()
@@ -129,6 +130,7 @@ class PMTWidgetUI(QWidget):
         )
         pmtContourContainer.setFixedHeight(220)
         self.pmtContourLayout = QGridLayout()
+
         self.pmt_handlenum_Label = QLabel("Handle number: _")
         self.pmtContourLayout.addWidget(self.pmt_handlenum_Label, 1, 2)
 
@@ -176,6 +178,15 @@ class PMTWidgetUI(QWidget):
         self.go_to_first_handle_button.setEnabled(True)
         self.go_to_first_handle_button.setVisible(True)
         self.pmtContourLayout.addWidget(self.go_to_first_handle_button, 2, 3)
+
+        # ROI_interaction_tips = QLabel("Hover for tips. Key F:en/disable drawing ROI")
+        # ROI_interaction_tips.setToolTip("Left drag moves the ROI\n\
+        # Left drag + Ctrl moves the ROI with position snapping\n\
+        # Left drag + Alt rotates the ROI\n\
+        # Left drag + Alt + Ctrl rotates the ROI with angle snapping\n\
+        # Left drag + Shift scales the ROI\n\
+        # Left drag + Shift + Ctrl scales the ROI with size snapping")
+        # self.pmtContourLayout.addWidget(ROI_interaction_tips, 4, 0, 1, 2)
 
         self.regenerate_roi_handle_button = StylishQT.GeneralFancyButton(
             label="Regain ROI"
@@ -502,8 +513,7 @@ class PMTWidgetUI(QWidget):
             scanning_and_inspection_layout
         )
 
-        # Add scanning_tabs and pmt_image_inspection_widget to the horizontal
-        # layout
+        # Add scanning_tabs and pmt_image_inspection_widget to the horizontal layout
         scanning_and_inspection_layout.addWidget(self.scanning_tabs)
         scanning_and_inspection_layout.addWidget(pmt_image_inspection_widget)
 
@@ -527,7 +537,6 @@ class PMTWidgetUI(QWidget):
         self.clicked_points_list.append(point)
 
         if len(self.clicked_points_list) == 1:
-            # In case of first click
             self.starting_point = self.clicked_points_list[0]
             self.starting_point_handle_position = [x, y]
 
@@ -571,6 +580,7 @@ class PMTWidgetUI(QWidget):
                 self.new_roi = True
 
     def buttonenabled(self, button, switch):
+
         if button == "rasterscan":
             if switch == "start":
                 self.startButton_pmt.setEnabled(False)
@@ -872,6 +882,7 @@ class PMTWidgetUI(QWidget):
         self.pmt_handlenum_Label.setText("Handle number: _")
 
     def reset_coordinates_dict(self):
+
         self.final_stacked_voltage_signals = None
         self.contour_ROI_signals_dict = {}
 
@@ -1188,8 +1199,8 @@ class PMTWidgetUI(QWidget):
                 yMax=tiff_image.shape[0],
             )
 
-        except Exception as e:
-            logging.info(f"Error displaying TIFF image: {e}")
+        except Exception as exc:
+            logging.info("Error displaying TIFF image:", exc_info=exc)
 
     def update_pixel_coords_and_intensity(self, event):
         """Update the pixel coordinates and intensity values."""

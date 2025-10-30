@@ -1,9 +1,3 @@
-# Uncomment first import line when running Fiumicino, uncomment the second line
-# when running camera_pmt_mapping
-# from PythonScriptsNike.camera_pmt_mapping import CameraPmtMapping
-from .camera_pmt_mapping import CameraPmtMapping
-
-CameraPmtMapping
 # Make sure to always perform a new registration as soon as the hardware has
 # changed or moved!
 

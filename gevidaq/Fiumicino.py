@@ -49,7 +49,6 @@ from . import (
 
 
 class Mainbody(QtWidgets.QWidget):
-
     savedirectory_changed = pyqtSignal(str)
 
     def __init__(self, *args, **kwargs):
@@ -61,10 +60,11 @@ class Mainbody(QtWidgets.QWidget):
         self.setFont(QFont("Arial"))
 
         # === GUI ===
-        self.setMinimumSize(1630, 1080)
-        self.setMaximumHeight(1080)
+        self.setMinimumSize(800, 600)
+        # self.setMaximumHeight(1080)
         self.setWindowTitle("Fiumicino")
         self.layout = QtWidgets.QGridLayout(self)
+
         """
         # GUI for right tabs panel-Creating instances of each widget showing on right side tabs.
         """
@@ -366,6 +366,7 @@ class Mainbody(QtWidgets.QWidget):
         handle_viewbox_coordinate_x,
         handle_viewbox_coordinate_y,
     ):
+
         # Number of points in single round of contour scan
         self.Waveformer_WidgetInstance.galvo_contour_label_1.setText(
             "Points in contour: %.d" % contour_point_number
@@ -480,6 +481,7 @@ class Mainbody(QtWidgets.QWidget):
         self.console_text_edit.setPlainText(Init_Meta_Text)
 
     def Save_Meta_Text(self):
+
         meta_text = self.console_text_edit.toPlainText()
         with open(
             os.path.join(self.savedirectory, "meta_text.txt"), "w"

@@ -60,6 +60,7 @@ CAMERA_TRIGGER_INSERT_ARRAY = np.array(
 
 
 class WaveformGenerator(QWidget):
+
     WaveformPackage = pyqtSignal(object)
     GalvoScanInfor = pyqtSignal(object)
     waveform_started = pyqtSignal()
@@ -961,7 +962,9 @@ class WaveformGenerator(QWidget):
         channel_keyword = self.current_Analog_channel.currentText()
 
         if self.wavetabs.currentIndex() != 2:
+
             if self.wavetabs.currentIndex() == 0:
+
                 # === Square waves ===
                 waveform_to_add = self.generate_analog(channel_keyword)
 
@@ -993,6 +996,7 @@ class WaveformGenerator(QWidget):
 
         # === Galvo scanning ===
         elif self.wavetabs.currentIndex() == 2:
+
             if self.galvos_tabs.currentIndex() == 0:
                 self.waveform_data_dict[channel_keyword] = (
                     self.generate_galvos()
@@ -1012,6 +1016,7 @@ class WaveformGenerator(QWidget):
                 )
 
     def del_waveform_analog(self):
+
         channel_keyword = self.current_Analog_channel.currentText()
 
         if channel_keyword == "galvos_contour":
@@ -1036,6 +1041,7 @@ class WaveformGenerator(QWidget):
                 del self.PlotDataItem_dict["galvos_X_contour"]
                 del self.PlotDataItem_dict["galvos_Y_contour"]
         else:
+
             self.pw_PlotItem.removeItem(
                 self.PlotDataItem_dict[channel_keyword]
             )
@@ -1052,6 +1058,11 @@ class WaveformGenerator(QWidget):
                 del self.waveform_data_dict[key]
         else:
             del self.waveform_data_dict[channel_keyword]
+
+        if channel_keyword == "fieldstimulator":
+            waveform_to_add = self.generate_analog(
+                channel_keyword
+            )  # TODO: unused
 
     # %%
 
@@ -1133,6 +1144,7 @@ class WaveformGenerator(QWidget):
         self.generate_graphy(channel_keyword, rectified_waveform)
 
     def del_waveform_digital(self):
+
         channel_keyword = self.Digital_channel_combox.currentText()
 
         self.pw_PlotItem.removeItem(self.PlotDataItem_dict[channel_keyword])
@@ -1221,6 +1233,7 @@ class WaveformGenerator(QWidget):
         return handle_viewbox_coordinate_position_array_expanded
 
     def generate_galvos(self):
+
         self.uiDaq_sample_rate = int(self.SamplingRateTextbox.value())
 
         # Scanning settings
@@ -1538,10 +1551,17 @@ class WaveformGenerator(QWidget):
     # %%
     # === for generating digital signals ===
     def generate_digital(self, channel):
+        # self.uiwaveDC_digital_waveform = None
+
         self.uiDaq_sample_rate = int(self.SamplingRateTextbox.value())
-        self.uiwavefrequency_digital_waveform = float(
-            self.DigFreqTextbox.text()
-        )
+        try:
+            self.uiwavefrequency_digital_waveform = float(
+                self.DigFreqTextbox.text()
+            )
+        except Exception as exc:
+            logging.info("IGNORE if using SERVO")
+            logging.info("Error missing frequency", exc_info=exc)
+
         if not self.DigOffsetTextbox.text():
             self.uiwaveoffset_digital_waveform = 0
         else:
@@ -1645,6 +1665,7 @@ class WaveformGenerator(QWidget):
 
     # %%
     def generate_photocycle(self, channel):
+
         self.uiDaq_sample_rate = int(self.SamplingRateTextbox.value())
         self.uiwavefrequency_photocycle_488 = float(
             self.textbox_photocycleA.text()
@@ -1715,6 +1736,7 @@ class WaveformGenerator(QWidget):
 
     # %%
     def generate_graphy(self, channel, waveform):
+
         self.uiDaq_sample_rate = int(self.SamplingRateTextbox.value())
         if waveform.dtype == "bool":
             waveform = waveform.astype(int)
@@ -2043,7 +2065,6 @@ class WaveformGenerator(QWidget):
         x_label = np.arange(self.reference_length) / self.uiDaq_sample_rate
 
         for waveform_key in self.waveform_data_dict:
-            #
             if self.waveform_data_dict[waveform_key].dtype == "float64":
                 # In case of galvos re-drawing
                 if "galvos_contour" in waveform_key:
@@ -2071,6 +2092,47 @@ class WaveformGenerator(QWidget):
                         name=waveform_key,
                     )
 
+            # THIS PIECE OF THE CODE IS FOR FORMATTING THE WAVEFORM DISPLAY, BUT IT DOESN'T WORK. IT DOES NOT SEEM ESSENTIAL SO I COMMENTED IT OUT - MARCO POST 19-03-2025
+            """
+            else:
+                if 'servo' in waveform_key:
+                    # create and pad plot
+                    if hasattr(self, 'padding_number'):
+                        temp_array = np.concatenate((np.zeros(self.padding_number), self.servo_dict[waveform_key]['rectified_waveform']))
+                    else:
+                            temp_array = self.servo_dict[waveform_key]['rectified_waveform']
+                    if len(temp_array) < len(self.waveform_data_dict[waveform_key]):
+                        temp_array = np.concatenate((temp_array, np.zeros(len(self.waveform_data_dict[waveform_key]) - len(temp_array))))
+                    elif len(temp_array) > len(self.waveform_data_dict[waveform_key]):
+                        temp_array = temp_array[:len(self.waveform_data_dict[waveform_key])]
+
+                    self.PlotDataItem_dict[waveform_key].setData(
+                        x_label,
+                        temp_array.astype(int),
+                        name=waveform_key,
+                    )
+                elif waveform_key != "cameratrigger": # and not 'servo' in waveform_key:
+                    # In case of digital boolean signals, convert to int before
+                    # plotting.
+                    self.PlotDataItem_dict[waveform_key].setData(
+                        x_label,
+                        self.waveform_data_dict[waveform_key].astype(int),
+                        name=waveform_key,
+                    )
+                else:
+                    # For camera triggers, set to zeros so that it does not
+                    # block canvas.
+                    rectified_waveform = np.zeros(
+                        len(self.waveform_data_dict[waveform_key]), dtype=bool
+                    )
+
+                    self.PlotDataItem_dict[waveform_key].setData(
+                        x_label,
+                        rectified_waveform.astype(int),
+                        name=waveform_key,
+                    )
+              """
+
         # === Making containers ===
         digital_line_num = 0
         for waveform_key in self.waveform_data_dict:
@@ -2086,6 +2148,7 @@ class WaveformGenerator(QWidget):
         digital_line_num = 0
         analog_line_num = 0
         for waveform_key in self.waveform_data_dict:
+
             if (
                 waveform_key in self.AnalogChannelList
                 or "galvos" in waveform_key
@@ -2098,6 +2161,7 @@ class WaveformGenerator(QWidget):
                 analog_line_num += 1
 
             elif waveform_key in self.DigitalChannelList:
+
                 self.digital_array[digital_line_num] = np.array(
                     [(self.waveform_data_dict[waveform_key], waveform_key)],
                     dtype=dataType_digital,
@@ -2109,6 +2173,7 @@ class WaveformGenerator(QWidget):
 
         # === Saving configed waveforms ===
         if self.checkbox_saveWaveforms.isChecked():
+
             ciao = []  # Variable name 'ciao' was defined by Nicolo Ceffa.
 
             for i in range(len(self.analog_array["Specification"])):
