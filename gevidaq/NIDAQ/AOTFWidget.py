@@ -104,7 +104,7 @@ class AOTFLaserUI(QWidget):
         self.lasers_status[self.wavelength][0] = value
 
         daq.sendSingleDigital(self.blanking_channel, value)
-        self.sig_lasers_status_changed.emit(self.lasers_status)
+        self.signal.emit(self.lasers_status)
 
     def shutter_CW_action(self):
         daq = DAQmission()
