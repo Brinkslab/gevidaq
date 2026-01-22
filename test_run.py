@@ -31,22 +31,30 @@ class Mock:
         return False
 
 
-seq = 0
 logger = logging.getLogger("test")
 
 
-def _daq_read(*args, **kwargs):
-    global seq
-    logger.debug(f"_daq_read ({args}, {kwargs})")
-    sleep(0.1)
-    a = kwargs["data"]
-    for i, items in enumerate(a):
-        for j, _ in enumerate(items):
-            add = (j + seq) % 100
-            items[j] = ((1000 + i * 1000) + add) * 100000
+def _make_daq_read():
+    seq = 0
 
-    seq = (seq + 1) % 100
-    return 0
+    def _daq_read(*args, **kwargs):
+        nonlocal seq
+        logger.debug(f"_daq_read ({args}, {kwargs})")
+        sleep(0.1)
+        a = kwargs["data"]
+        for i, items in enumerate(a):
+            for j, _ in enumerate(items):
+                add = (j + seq) % 100
+                items[j] = ((1000 + i * 1000) + add) * 100000
+
+        seq = (seq + 1) % 100
+        return 0
+
+    return _daq_read
+
+
+def _daq_write(*args, **kwargs):
+    logger.debug(f"_daq_write ({args}, {kwargs})")
 
 
 def _daq_chan_type(arg, aarg, val):
@@ -78,24 +86,60 @@ def _daq_chan_attribute(task, channel, attribute, val):
     return 0
 
 
-def run_test():
-    from gevidaq import __main__ as main
+def _make_BMC_GetNextMessage():
+    count = 0
 
+    def BMC_GetNextMessage(
+        serial, device, message_type, message_id, message_data
+    ):
+        nonlocal count
+        logger.debug(
+            f"BMC_GetNextMessage ({serial}, {device}, {message_type}, "
+            f"{message_id}, {message_data}) count = {count}"
+        )
+
+        if count == 0:
+            message_id._obj.value = 0
+        else:
+            message_id._obj.value = 1
+
+        message_type._obj.value = 2
+        count += 1
+
+    return BMC_GetNextMessage
+
+
+def _dcamapi_init(paraminit):
+    paraminit._obj.iDeviceCount = 1
+    return 1  # DCAMERR_NOERROR
+
+
+def run_test():
     # warnings are errors
     warnings.filterwarnings("error")
     warnings.filterwarnings("default", category=DeprecationWarning)
 
     # lower logging level
+    #from gevidaq.logging import set_up_logging
+    #set_up_logging()
     logging.getLogger().setLevel(logging.DEBUG)
 
     # use mocks for ctypes dlls
     sys.modules["gevidaq.CoordinatesManager.DMDActuator"] = Mock("DMDActuator")
     ctypes.WinDLL = Mock("WinDLL")
+    ctypes.cdll = Mock("cdll")
+
+    # mock thorlabs dll functions
+    ctypes.cdll.BMC_GetNextMessage = _make_BMC_GetNextMessage()
+
+    # mock hamamatsu dcam dll functions
+    ctypes.WinDLL.dcamapi_init = _dcamapi_init
 
     # import nidaq for monkeypatching
     import nidaqmx._lib as daq_lib
     import nidaqmx.constants
-    import nidaqmx.stream_readers as daq_streams
+    import nidaqmx.stream_readers as daq_rstreams
+    import nidaqmx.stream_writers as daq_wstreams
 
     # create mock objects for nidaq
     nidaq_dll = Mock("nidaq_dll")
@@ -109,11 +153,14 @@ def run_test():
     nidaq_dll.DAQmxGetTaskAttribute.argtypes = True
 
     # apply nidaq monkeypatches
-    daq_streams.AnalogMultiChannelReader.read_many_sample = _daq_read
+    daq_rstreams.AnalogMultiChannelReader.read_many_sample = _make_daq_read()
+    daq_wstreams.AnalogMultiChannelWriter.write_many_sample = _daq_write
     daq_lib.DaqLibImporter.windll = nidaq_dll
     daq_lib.DaqLibImporter.cdll = nidaq_dll
     daq_lib.DaqLibImporter._windll = nidaq_dll
     daq_lib.DaqLibImporter.encoding = "utf-8"
+
+    from gevidaq import __main__ as main
 
     # run fiumchino
     main.run()
