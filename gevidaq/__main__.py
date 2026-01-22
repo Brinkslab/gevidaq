@@ -3,23 +3,26 @@ import pathlib
 import sys
 import threading
 
+
 # set up logging first
-logfile = pathlib.Path(f"./{__package__}.log")
-try:
-    logfile.replace(f"{logfile}.previous")
-except FileNotFoundError:
-    pass
+def set_up_logging():
+    logfile = pathlib.Path(f"./{__package__}.log")
+    try:
+        logfile.replace(f"{logfile}.previous")
+    except FileNotFoundError:
+        pass
 
-file_handler = logging.FileHandler(
-    filename=logfile,
-)
-logging.basicConfig(
-    handlers=[file_handler, logging.StreamHandler()],
-    level=logging.INFO,
-    format="%(asctime)s:%(levelname)s:%(name)s:%(message)s",
-)
+    file_handler = logging.FileHandler(
+        filename=logfile,
+    )
+    logging.basicConfig(
+        handlers=[file_handler, logging.StreamHandler()],
+        level=logging.INFO,
+        format="%(asctime)s:%(levelname)s:%(name)s:%(message)s",
+    )
 
 
+# set up except hooks to log exceptions
 def excepthook(*exc_info):
     logging.critical("uncaught exception!", exc_info=exc_info)
 
@@ -42,6 +45,7 @@ def run():
 
 
 if __name__ == "__main__":
+    set_up_logging()
     run()
 
 # update check

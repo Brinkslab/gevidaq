@@ -4,6 +4,8 @@ import sys
 import warnings
 from time import sleep
 
+from gevidaq import __main__ as main
+
 
 class Mock:
     """mock class, replaces object with dummy that returns self
@@ -120,8 +122,6 @@ def run_test():
     warnings.filterwarnings("default", category=DeprecationWarning)
 
     # lower logging level
-    #from gevidaq.logging import set_up_logging
-    #set_up_logging()
     logging.getLogger().setLevel(logging.DEBUG)
 
     # use mocks for ctypes dlls
@@ -160,11 +160,10 @@ def run_test():
     daq_lib.DaqLibImporter._windll = nidaq_dll
     daq_lib.DaqLibImporter.encoding = "utf-8"
 
-    from gevidaq import __main__ as main
-
     # run fiumchino
     main.run()
 
 
 if __name__ == "__main__":
+    main.set_up_logging()
     run_test()
