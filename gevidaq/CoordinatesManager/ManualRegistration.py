@@ -11,9 +11,10 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import (
+from pyqtgraph import QtGui
+from qtpy import QtWidgets
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import (
     QComboBox,
     QGridLayout,
     QLabel,
@@ -21,7 +22,6 @@ from PyQt5.QtWidgets import (
     QSpinBox,
     QWidget,
 )
-from pyqtgraph import QtGui
 
 from ..StylishQT import roundQGroupBox
 from . import CoordinateTransformations
@@ -29,9 +29,9 @@ from .ui_widgets.SelectPointImageView import SelectPointImageView
 
 
 class ManualRegistrationWindow(QWidget):
-    sig_request_camera_image = pyqtSignal()
-    sig_cast_transformation_to_DMD = pyqtSignal(np.ndarray, str)
-    sig_cast_transformation_to_galvos = pyqtSignal(np.ndarray)
+    sig_request_camera_image = Signal()
+    sig_cast_transformation_to_DMD = Signal(np.ndarray, str)
+    sig_cast_transformation_to_galvos = Signal(np.ndarray)
 
     def __init__(self, *args, **kwargs):
         super().__init__()
@@ -291,7 +291,7 @@ class ManualRegistrationWindow(QWidget):
 
 
 class ManualRegistrationWidget(QWidget):
-    sig_request_camera_image = pyqtSignal()
+    sig_request_camera_image = Signal()
 
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

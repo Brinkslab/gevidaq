@@ -13,9 +13,9 @@ import sys
 import threading
 import time
 
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import (
     QGridLayout,
     QGroupBox,
     QLabel,

@@ -7,11 +7,12 @@ Created on Mon Mar 18 12:21:01 2019
 Notes:
 
 """
+
 import nidaqmx
 import numpy as np
 from nidaqmx.stream_readers import AnalogMultiChannelReader
 from nidaqmx.stream_writers import AnalogSingleChannelWriter
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 
 from ..NIDAQ.constants import MeasurementConstants, NiDaqChannels
 from ..NIDAQ.wavegenerator import blockWave
@@ -23,7 +24,7 @@ class ContinuousPatchThread(QThread):
     QThread so the main python code still runs while the measurment is done.
     """
 
-    measurement = pyqtSignal(
+    measurement = Signal(
         np.ndarray, np.ndarray
     )  # The signal for the measurement, we can connect to this signal
 
@@ -179,7 +180,7 @@ class ContinuousPatchThread_hold(QThread):
     QThread so the main python code still runs while the measurment is done.
     """
 
-    measurement = pyqtSignal(
+    measurement = Signal(
         np.ndarray, np.ndarray
     )  # The signal for the measurement, we can connect to this signal
 
@@ -336,7 +337,7 @@ class ContinuousPatchThread_currentclamp(QThread):
     QThread so the main python code still runs while the measurment is done.
     """
 
-    measurement = pyqtSignal(
+    measurement = Signal(
         np.ndarray, np.ndarray
     )  # The signal for the measurement, we can connect to this signal
 
@@ -494,7 +495,7 @@ class ContinuousPatchThread_zap(QThread):
     QThread so the main python code still runs while the measurment is done.
     """
 
-    # measurement = pyqtSignal(np.ndarray, np.ndarray) #The signal for the measurement, we can connect to this signal
+    # measurement = Signal(np.ndarray, np.ndarray) #The signal for the measurement, we can connect to this signal
     def __init__(self, wave, sampleRate, readNumber, *args, **kwargs):
         """
         wave is the output data

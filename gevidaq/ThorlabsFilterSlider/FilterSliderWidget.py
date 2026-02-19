@@ -5,14 +5,13 @@ Created on Wed Mar  4 13:54:35 2020
 @author: xinmeng
 """
 
-
 import logging
 import sys
 import threading
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QFont
+from qtpy import QtWidgets
+from qtpy.QtGui import QFont
 
 from .. import StylishQT
 from .filterpyserial import ELL9Filter
@@ -61,9 +60,7 @@ class FilterSliderWidgetUI(QtWidgets.QWidget):
         self.FilterButtongroup_1.addButton(self.filter1_pos3)
         self.filtercontrolLayout.addWidget(self.filter1_pos3, 0, 4)
         self.FilterButtongroup_1.setExclusive(True)
-        self.FilterButtongroup_1.buttonClicked[int].connect(
-            self.DecodeFilterMove
-        )
+        self.FilterButtongroup_1.buttonClicked.connect(self.DecodeFilterMove)
 
         self.FilterButtongroup_2 = QtWidgets.QButtonGroup(self)
 
@@ -87,9 +84,7 @@ class FilterSliderWidgetUI(QtWidgets.QWidget):
         self.FilterButtongroup_2.addButton(self.filter2_pos3)
         self.filtercontrolLayout.addWidget(self.filter2_pos3, 1, 4)
         self.FilterButtongroup_2.setExclusive(True)
-        self.FilterButtongroup_2.buttonClicked[int].connect(
-            self.DecodeFilterMove
-        )
+        self.FilterButtongroup_2.buttonClicked.connect(self.DecodeFilterMove)
 
         EM_filtercontrolContainer = StylishQT.roundQGroupBox(
             title="Emission", background_color="honeydew"
@@ -109,9 +104,7 @@ class FilterSliderWidgetUI(QtWidgets.QWidget):
         self.FilterButtongroup_3.addButton(self.filter3_pos1)
         self.EM_filtercontrolContainerLayout.addWidget(self.filter3_pos1, 0, 0)
         self.FilterButtongroup_3.setExclusive(True)
-        self.FilterButtongroup_3.buttonClicked[int].connect(
-            self.DecodeFilterMove
-        )
+        self.FilterButtongroup_3.buttonClicked.connect(self.DecodeFilterMove)
 
         EM_filtercontrolContainer.setLayout(
             self.EM_filtercontrolContainerLayout

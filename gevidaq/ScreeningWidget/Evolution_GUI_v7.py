@@ -13,9 +13,9 @@ import sys
 import threading
 
 import numpy as np
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QFont, QIcon, QTextCursor
+from qtpy import QtWidgets
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QFont, QIcon, QTextCursor
 
 from .. import NIDAQ, Icons, StylishQT
 from ..ImageAnalysis import EvolutionAnalysisWidget
@@ -23,7 +23,7 @@ from .EvolutionScanningThread import ScanningExecutionThread
 
 
 class Mainbody(QtWidgets.QWidget):
-    # waveforms_generated = pyqtSignal(object, object, list, int)
+    # waveforms_generated = Signal(object, object, list, int)
     # %%
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

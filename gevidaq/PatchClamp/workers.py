@@ -5,22 +5,21 @@ Created on Wed Aug 11 15:15:30 2021
 @author: TvdrBurgt
 """
 
-
 import time
 
 import numpy as np
-from PyQt5.QtCore import QObject, pyqtSignal, pyqtSlot
+from qtpy.QtCore import QObject, Signal, Slot
 
 from .ImageProcessing_patchclamp import PatchClampImageProcessing as ia
 
 
 class Worker(QObject):
-    draw = pyqtSignal(list)
-    graph1 = pyqtSignal(np.ndarray)
-    graph2 = pyqtSignal(np.ndarray)
-    status = pyqtSignal(str)
-    progress = pyqtSignal(str)
-    finished = pyqtSignal()
+    draw = Signal(list)
+    graph1 = Signal(np.ndarray)
+    graph2 = Signal(np.ndarray)
+    status = Signal(str)
+    progress = Signal(str)
+    finished = Signal()
 
     def __init__(self, parent):
         super().__init__()
@@ -43,7 +42,7 @@ class Worker(QObject):
     def STOP(self, state):
         self._STOP = state
 
-    @pyqtSlot()
+    @Slot()
     def target2center(self):
         """Target to center moves the XY stage so that the user-selected
         target ends up in the center of the camera field-of-view.
@@ -83,7 +82,7 @@ class Worker(QObject):
 
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def hardcalibration(self):
         """Hardcalibration aligns the coordinate system of the micromanipulator
         with that of the camera field-of-view (FOV) by constructing a rotation
@@ -272,7 +271,7 @@ class Worker(QObject):
         self.status.emit("Calibration finished")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def prechecks(self):
         """Pre-checks make sure that the patch preparation is successful.
         We make sure that over pressure is applied before entering the sample
@@ -340,7 +339,7 @@ class Worker(QObject):
         self.status.emit("Pre-checks finished")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def autopatch(self):
         """Autopatch is where the full pipeline of automatic patch algorithms
         is supposed to start IF the tip detection step would be done by an AI.
@@ -376,7 +375,7 @@ class Worker(QObject):
         self.progress.emit("Warning: CHECK TIP LOCALIZATION!")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def autofocus_tip(self):
         """Autofocus pipette tip iteratively moves the pipette up or down
         untill the tip is in focus.
@@ -612,7 +611,7 @@ class Worker(QObject):
         self.status.emit("Autofocus finished")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def softcalibration(self):
         """Softcalibration couples the micromanipulator coordinates with the
         pixelcoordinates of a pipette tip.
@@ -745,7 +744,7 @@ class Worker(QObject):
         self.status.emit("Tip-detection finished")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def pipette2target(self):
         """Pipette tip to target manoeuvres the micromanipulator to a target
         in the camera field-of-view
@@ -849,7 +848,7 @@ class Worker(QObject):
         self.status.emit("Approach finished")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def gigaseal(self):
         """Gigaseal applies suction to get seal a patch of cell membrane.
 
@@ -923,7 +922,7 @@ class Worker(QObject):
         self.status.emit("Gigaseal finished")
         self.finished.emit()
 
-    @pyqtSlot()
+    @Slot()
     def break_in(self):
         """Break-in applies pressure pulses to rupture the membrane patch.
 

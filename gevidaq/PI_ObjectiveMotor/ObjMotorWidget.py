@@ -10,10 +10,10 @@ import sys
 import threading
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QSize, Qt, QThread
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import QSize, Qt, QThread
+from qtpy.QtGui import QFont, QIcon
+from qtpy.QtWidgets import (
     QDoubleSpinBox,
     QGridLayout,
     QGroupBox,
@@ -29,9 +29,9 @@ from .focuser import PIMotor
 
 
 class ObjMotorWidgetUI(QWidget):
-    # waveforms_generated = pyqtSignal(object, object, list, int)
-    # SignalForContourScanning = pyqtSignal(int, int, int, np.ndarray, np.ndarray)
-    # MessageBack = pyqtSignal(str)
+    # waveforms_generated = Signal(object, object, list, int)
+    # SignalForContourScanning = Signal(int, int, int, np.ndarray, np.ndarray)
+    # MessageBack = Signal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -45,8 +45,7 @@ class ObjMotorWidgetUI(QWidget):
 
         # Movement based on relative positions.
         self.ObjMotorcontrolContainer = QGroupBox("Objective focus")
-        self.ObjMotorcontrolContainer.setStyleSheet(
-            "QGroupBox {\
+        self.ObjMotorcontrolContainer.setStyleSheet("QGroupBox {\
                                 font: bold;\
                                 border: 1px solid silver;\
                                 border-radius: 6px;\
@@ -55,8 +54,7 @@ class ObjMotorWidgetUI(QWidget):
                                 background-color: #FFFAFA}\
                                 QGroupBox::title{subcontrol-origin: margin;\
                                                  left: 7px;\
-                                                 padding: 5px 5px 5px 5px;}"
-        )
+                                                 padding: 5px 5px 5px 5px;}")
         self.ObjMotorcontrolLayout = QGridLayout()
 
         self.ObjMotor_connect = StylishQT.connectButton()
@@ -277,7 +275,7 @@ class ObjMotorWidgetUI(QWidget):
 
 
 class ConnectObj_Thread(QThread):
-    # videostack_signal = pyqtSignal(np.ndarray)
+    # videostack_signal = Signal(np.ndarray)
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 

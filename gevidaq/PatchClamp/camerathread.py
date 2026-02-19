@@ -5,20 +5,19 @@ Created on Tue Aug 10 15:05:11 2021
 @author: TvdrBurgt
 """
 
-
 import logging
 import time
 from copy import copy
 
 import numpy as np
-from PyQt5.QtCore import QMutex, QThread, pyqtSignal, pyqtSlot
+from qtpy.QtCore import QMutex, QThread, Signal, Slot
 
 from ..HamamatsuCam.HamamatsuActuator import CamActuator
 
 
 class CameraThread(QThread):
-    snapsignal = pyqtSignal(np.ndarray)
-    livesignal = pyqtSignal(np.ndarray)
+    snapsignal = Signal(np.ndarray)
+    livesignal = Signal(np.ndarray)
 
     def __init__(self, camerahandle=None):
         self.exposuretime = 0.07  # seconds
@@ -55,7 +54,7 @@ class CameraThread(QThread):
         self.snapsignal.emit(snap)
         return snap
 
-    @pyqtSlot()
+    @Slot()
     def live(self):
         logging.info("camera thread started")
 

@@ -20,10 +20,10 @@ import numpy as np
 import pyqtgraph as pg
 import tifffile as skimtiff
 from PIL import Image
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QRectF, pyqtSignal
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import QRectF, Signal
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
     QGridLayout,
@@ -45,10 +45,10 @@ from .ImageProcessing import PatchAnalysis, ProcessImage
 
 
 class AnalysisWidgetUI(QWidget):
-    # waveforms_generated = pyqtSignal(object, object, list, int)
-    # SignalForContourScanning = pyqtSignal(int, int, int, np.ndarray, np.ndarray)
-    MessageBack = pyqtSignal(str)
-    Cellselection_DMD_mask_contour = pyqtSignal(list)
+    # waveforms_generated = Signal(object, object, list, int)
+    # SignalForContourScanning = Signal(int, int, int, np.ndarray, np.ndarray)
+    MessageBack = Signal(str)
+    Cellselection_DMD_mask_contour = Signal(list)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -1119,7 +1119,7 @@ class AnalysisWidgetUI(QWidget):
 
 # %%
 class PlotAnalysisGUI(QWidget):
-    waveforms_generated = pyqtSignal(object, object, list, int)
+    waveforms_generated = Signal(object, object, list, int)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

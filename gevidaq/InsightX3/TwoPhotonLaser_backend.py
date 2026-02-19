@@ -11,7 +11,7 @@ import logging
 import time
 
 import serial
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 
 
 class InsightX3:
@@ -329,7 +329,7 @@ class QueryLaserStatusThread(QThread):
     BEFORE SENDING COMMANDS, ONE CAN SET STOPFLAG TO FALSE AND START AGAIN AFTER EXECUTION,
     """
 
-    Thread_Status_list = pyqtSignal(list)
+    Thread_Status_list = Signal(list)
 
     def __init__(self, Laserinstance, frequency, *args, **kwargs):
         super().__init__(*args, **kwargs)

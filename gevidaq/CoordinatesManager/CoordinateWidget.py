@@ -24,10 +24,10 @@ from matplotlib.backends.backend_qt5agg import (
     NavigationToolbar2QT as NavigationToolbar,
 )
 from matplotlib.figure import Figure
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QIcon
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import Signal
+from qtpy.QtGui import QIcon
+from qtpy.QtWidgets import (
     QCheckBox,
     QGridLayout,
     QLabel,
@@ -53,13 +53,13 @@ from .ui_widgets.DrawingWidget import DrawingWidget
 
 
 class CoordinatesWidgetUI(QWidget):
-    sig_cast_mask_coordinates_to_dmd = pyqtSignal(dict)
-    sig_cast_mask_coordinates_to_galvo = pyqtSignal(list)
-    sig_start_registration = pyqtSignal()
-    sig_finished_registration = pyqtSignal()
-    sig_cast_camera_image = pyqtSignal(np.ndarray)
+    sig_cast_mask_coordinates_to_dmd = Signal(dict)
+    sig_cast_mask_coordinates_to_galvo = Signal(list)
+    sig_start_registration = Signal()
+    sig_finished_registration = Signal()
+    sig_cast_camera_image = Signal(np.ndarray)
 
-    MessageBack = pyqtSignal(str)
+    MessageBack = Signal(str)
 
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

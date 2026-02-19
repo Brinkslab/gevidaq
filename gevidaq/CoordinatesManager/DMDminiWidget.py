@@ -4,13 +4,14 @@ Created on Sat Feb  6 18:34:44 2021
 
 @author: xinmeng
 """
+
 import logging
 import sys
 
 import numpy as np
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QGridLayout, QPushButton, QWidget
+from qtpy import QtWidgets
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QGridLayout, QPushButton, QWidget
 
 from .. import StylishQT
 from ..GeneralUsage.ThreadingFunc import run_in_thread

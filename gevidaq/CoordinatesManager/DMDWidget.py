@@ -13,6 +13,7 @@ Created on Tue Jul  7 10:44:31 2020
 
 Adding 'laser' to CoordinateWidget signal list.
 """
+
 import importlib.resources
 import logging
 import os
@@ -20,9 +21,9 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5 import QtGui, QtWidgets
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtWidgets import (
+from qtpy import QtGui, QtWidgets
+from qtpy.QtCore import Signal
+from qtpy.QtWidgets import (
     QCheckBox,
     QComboBox,
     QGridLayout,
@@ -41,9 +42,9 @@ from . import CoordinateTransformations, DMDActuator, Registration, Registrator
 
 
 class DMDWidget(QWidget):
-    sig_request_mask_coordinates = pyqtSignal()
-    sig_start_registration = pyqtSignal()
-    sig_finished_registration = pyqtSignal()
+    sig_request_mask_coordinates = Signal()
+    sig_start_registration = Signal()
+    sig_finished_registration = Signal()
 
     def __init__(self, parent=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

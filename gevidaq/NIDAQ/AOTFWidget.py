@@ -9,10 +9,10 @@ import logging
 import threading
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont, QPalette
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor, QFont, QPalette
+from qtpy.QtWidgets import (
     QDoubleSpinBox,
     QGridLayout,
     QLabel,

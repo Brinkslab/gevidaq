@@ -38,7 +38,6 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies= [
-  "PyQt5>=5.15",
   "matplotlib",
   "nidaqmx",
   "numpy>=2",
@@ -48,6 +47,7 @@ dependencies= [
   "plotly",
   "pyqtgraph",
   "pyserial",
+  "qtpy",
   "scikit-image",
   "scipy",
   "seaborn",
