@@ -160,6 +160,11 @@ def run_test():
     daq_lib.DaqLibImporter._windll = nidaq_dll
     daq_lib.DaqLibImporter.encoding = "utf-8"
 
+    # disable PW
+    from gevidaq.NIDAQ import WaveformWidget
+    WaveformWidget.DISABLE_PW = True
+    # TODO: fix this crash so workaround is no longer needed
+
     # run fiumchino
     main.run()
 

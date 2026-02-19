@@ -57,6 +57,7 @@ from .wavegenerator import (
 CAMERA_TRIGGER_INSERT_ARRAY = np.array(
     [False] * 25 + [True] * 25 + [False] * 25 + [True] * 25 + [False] * 15
 )
+DISABLE_PW = False
 
 
 class WaveformGenerator(QWidget):
@@ -861,7 +862,11 @@ class WaveformGenerator(QWidget):
         master_waveform.addWidget(DigitalContainer, 2, 0, 1, 2)
         master_waveform.addWidget(ReadContainer, 0, 0, 1, 1)
         master_waveform.addWidget(executionContainer, 0, 1, 1, 1)
-        master_waveform.addWidget(self.pw, 3, 0, 1, 2)
+        if DISABLE_PW is False:
+            master_waveform.addWidget(self.pw, 3, 0, 1, 2)
+        else:
+            master_waveform.addWidget(QWidget(), 3, 0, 1, 2)
+
         # master_waveform.addWidget(self.pw_data, 4, 0)
         self.tabs.setLayout(master_waveform)
         # self.setLayout(pmtmaster)
