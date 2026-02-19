@@ -38,6 +38,7 @@ classifiers = [
   "Topic :: Scientific/Engineering :: Bio-Informatics",
 ]
 dependencies= [
+  "PyQt5>=5.15",
   "matplotlib",
   "nidaqmx",
   "numpy>=2",
