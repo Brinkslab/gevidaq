@@ -116,6 +116,67 @@ def _dcamapi_init(paraminit):
     return 1  # DCAMERR_NOERROR
 
 
+PROPTABLE = [
+    "binning",
+    "buffer_framebytes",
+    "defect_correct_mode",
+    "exposure_time",
+    "image_framebytes",
+    "image_height",
+    "image_width",
+    "internal_frame_rate",
+    "output_trigger_kind[0]",
+    "readout_speed",
+    "subarray_hpos",
+    "subarray_hsize",
+    "subarray_mode",
+    "subarray_vpos",
+    "subarray_vsize",
+    "timing_readout_time",
+    "trigger_active",
+    "trigger_source",
+]
+
+
+def _make_dcamprop_getnextid():
+    i = -1
+
+    def _dcamprop_getnextid(cam, prop_id, opion):
+        nonlocal i
+        if i < len(PROPTABLE) - 1:
+            i += 1
+
+        prop_id._obj.value = i
+        return 1  # DCAMERR_NOERROR
+
+    return _dcamprop_getnextid
+
+
+def _dcamprop_getname(cam, prop_id, buf, buflen):
+    buf.value = PROPTABLE[prop_id.value].encode()
+    return 1  # DCAMERR_NOERROR
+
+
+def _dcamprop_getattr(cam, attr):
+    attr._obj.attribute = 2  # DCAMPROP_TYPE_LONG
+    return 1  # DCAMERR_NOERROR
+
+
+def _dcamprop_getvalue(cam, prop_id, value):
+    value._obj.value = 1
+    return 1  # DCAMERR_NOERROR
+
+
+def _dcamcap_status(handle, status):
+    sleep(1)
+    return 1  # DCAMERR_NOERROR
+
+
+def _dcamcap_transferinfo(handle, transfer):
+    transfer._obj.nFrameCount = 1
+    return 1  # DCAMERR_NOERROR
+
+
 def run_test():
     # warnings are errors
     warnings.filterwarnings("error")
@@ -134,6 +195,11 @@ def run_test():
 
     # mock hamamatsu dcam dll functions
     ctypes.WinDLL.dcamapi_init = _dcamapi_init
+    ctypes.WinDLL.dcamprop_getnextid = _make_dcamprop_getnextid()
+    ctypes.WinDLL.dcamprop_getname = _dcamprop_getname
+    ctypes.WinDLL.dcamprop_getattr = _dcamprop_getattr
+    ctypes.WinDLL.dcamprop_getvalue = _dcamprop_getvalue
+    ctypes.WinDLL.dcamcap_status = _dcamcap_status
 
     # import nidaq for monkeypatching
     import nidaqmx._lib as daq_lib
