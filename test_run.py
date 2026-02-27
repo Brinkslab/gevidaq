@@ -162,6 +162,7 @@ def run_test():
 
     # disable PW
     from gevidaq.NIDAQ import WaveformWidget
+
     WaveformWidget.DISABLE_PW = True
     # TODO: fix this crash so workaround is no longer needed
 

@@ -21,8 +21,11 @@ def set_up_logging():
         format="%(asctime)s:%(levelname)s:%(name)s:%(message)s",
     )
 
+    # set up except hooks to log exceptions
+    sys.excepthook = excepthook
+    threading.excepthook = threading_excepthook
 
-# set up except hooks to log exceptions
+
 def excepthook(*exc_info):
     logging.critical("uncaught exception!", exc_info=exc_info)
 
@@ -32,10 +35,6 @@ def threading_excepthook(exc_info):
     logging.critical(
         f"uncaught exception in thread {thread}!", exc_info=exc_info
     )
-
-
-sys.excepthook = excepthook
-threading.excepthook = threading_excepthook
 
 
 def run():
