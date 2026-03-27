@@ -11,10 +11,10 @@ import sys
 import numpy as np
 import pyqtgraph as pg
 import pyqtgraph.exporters
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import Qt
-from PyQt5.QtGui import QColor, QFont, QPalette, QPen
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import Qt
+from qtpy.QtGui import QColor, QFont, QPalette, QPen
+from qtpy.QtWidgets import (
     QDoubleSpinBox,
     QGridLayout,
     QGroupBox,

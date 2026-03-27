@@ -17,7 +17,7 @@ import nidaqmx
 import numpy as np
 from nidaqmx.constants import AcquisitionType, LineGrouping
 from nidaqmx.stream_readers import AnalogMultiChannelReader
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 
 from .constants import NiDaqChannels
 
@@ -27,8 +27,8 @@ class DAQmission(QThread):
     # For all-purpose Nidaq tasks. Use "Dev1/ai22" as reference channel.
     """
 
-    collected_data = pyqtSignal(np.ndarray)
-    finishSignal = pyqtSignal()
+    collected_data = Signal(np.ndarray)
+    finishSignal = Signal()
 
     def __init__(self, channel_LUT=None, *args, **kwargs):
         super().__init__(*args, **kwargs)

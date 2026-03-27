@@ -7,9 +7,9 @@ Created on Wed May  6 11:26:55 2020
 """
 
 import pyqtgraph as pg
-from PyQt5 import QtCore
-from PyQt5.QtCore import QSize, Qt
 from pyqtgraph import QtGui
+from qtpy import QtCore
+from qtpy.QtCore import QSize, Qt
 
 
 class SelectPointImageView(pg.ImageView):

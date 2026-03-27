@@ -11,8 +11,8 @@ import sys
 
 import matplotlib.pyplot as plt
 import numpy as np
-from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QGridLayout, QPushButton, QWidget
+from qtpy import QtWidgets
+from qtpy.QtWidgets import QGridLayout, QPushButton, QWidget
 
 from ..HamamatsuCam.HamamatsuActuator import CamActuator
 from ..SampleStageControl.stage import LudlStage

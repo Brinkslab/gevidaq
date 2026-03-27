@@ -8,17 +8,17 @@ Created on Mon Apr 20 18:33:21 2020
 """
 
 import pyqtgraph as pg
-from PyQt5 import QtCore, QtGui, QtWidgets
-from PyQt5.QtCore import (
+from qtpy import QtCore, QtGui, QtWidgets
+from qtpy.QtCore import (
     QAbstractAnimation,
     QPoint,
     QRect,
     QSize,
     Qt,
     QVariantAnimation,
-    pyqtSignal,
+    Signal,
 )
-from PyQt5.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPen, QPixmap
+from qtpy.QtGui import QBrush, QColor, QFont, QIcon, QPainter, QPen, QPixmap
 
 from . import Icons
 
@@ -50,7 +50,7 @@ class roundQGroupBox(QtWidgets.QGroupBox):
 
 
 class FancyPushButton(QtWidgets.QPushButton):
-    clicked = pyqtSignal()
+    clicked = Signal()
     """
     Button with animation effect. color1 is the color on the right, color2 on the left.
     """
@@ -486,7 +486,7 @@ class SquareImageView(pg.ImageView):
 
 
 class _Bar(QtWidgets.QWidget):
-    clickedValue = QtCore.pyqtSignal(int)
+    clickedValue = QtCore.Signal(int)
 
     def __init__(self, steps, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -738,7 +738,7 @@ class PowerBar(QtWidgets.QWidget):
     right-clicking resets the color to None (no-color).
     """
 
-    colorChanged = QtCore.pyqtSignal()
+    colorChanged = QtCore.Signal()
 
     def __init__(self, steps=5, *args, **kwargs):
         super().__init__(*args, **kwargs)

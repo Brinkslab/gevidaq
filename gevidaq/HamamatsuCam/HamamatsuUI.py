@@ -18,16 +18,16 @@ from datetime import datetime
 import numpy as np
 import pyqtgraph as pg
 import tifffile as skimtiff
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, QRectF, Qt, QThread, pyqtSignal
-from PyQt5.QtGui import (
+from qtpy import QtWidgets
+from qtpy.QtCore import QObject, QRectF, Qt, QThread, Signal
+from qtpy.QtGui import (
     QColor,
     QFont,
     QIcon,
     QMovie,
     QPen,
 )
-from PyQt5.QtWidgets import (
+from qtpy.QtWidgets import (
     QAction,
     QButtonGroup,
     QComboBox,
@@ -74,11 +74,11 @@ pg.setConfigOption("leftButtonPan", False)
 
 class CameraUI(QMainWindow):
 
-    output_signal_SnapImg = pyqtSignal(np.ndarray)
-    output_signal_LiveImg = pyqtSignal(np.ndarray)
-    output_signal_camera_handle = pyqtSignal(object)
-    output_signal_camera_pmt_contour = pyqtSignal(object)
-    stream_parameters = pyqtSignal(object)
+    output_signal_SnapImg = Signal(np.ndarray)
+    output_signal_LiveImg = Signal(np.ndarray)
+    output_signal_camera_handle = Signal(object)
+    output_signal_camera_pmt_contour = Signal(object)
+    stream_parameters = Signal(object)
 
     def __init__(self, pmt_widget_ui, waveform_widget, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -242,7 +242,7 @@ class CameraUI(QMainWindow):
         self.BinningButton_4.setCheckable(True)
         self.BinningButtongroup.addButton(self.BinningButton_4, 3)
         self.BinningButtongroup.setExclusive(True)
-        self.BinningButtongroup.buttonClicked[int].connect(self.SetBinning)
+        self.BinningButtongroup.buttonClicked.connect(self.SetBinning)
 
         Label_binning = QLabel("Binning:")
         Label_binning.setToolTip(
@@ -266,7 +266,7 @@ class CameraUI(QMainWindow):
         self.PixelTypeButton_3.setChecked(True)
         self.PixelTypeButtongroup.addButton(self.PixelTypeButton_3, 3)
         self.PixelTypeButtongroup.setExclusive(True)
-        self.PixelTypeButtongroup.buttonClicked[int].connect(self.SetPixelType)
+        self.PixelTypeButtongroup.buttonClicked.connect(self.SetPixelType)
 
         CameraImageFormatLayout.addWidget(QLabel("Pixel bit depth:"), 1, 0)
         CameraImageFormatLayout.addWidget(self.PixelTypeButton_1, 1, 1)
@@ -449,9 +449,7 @@ class CameraUI(QMainWindow):
         )
         self.TriggerButtongroup.setExclusive(True)
 
-        self.TriggerButtongroup.buttonClicked[int].connect(
-            self.SetTimingTrigger
-        )
+        self.TriggerButtongroup.buttonClicked.connect(self.SetTimingTrigger)
 
         CameraSettingTab_3.layout.addWidget(
             QLabel("Acquisition Control:"), 0, 0, 1, 2
@@ -2953,11 +2951,11 @@ class CameraUI(QMainWindow):
 
 
 class StreamingWorker(QObject):
-    update_label = pyqtSignal(str)
-    update_progress = pyqtSignal(int)
-    finished = pyqtSignal()
-    error = pyqtSignal(str)
-    streaming_finished = pyqtSignal()
+    update_label = Signal(str)
+    update_progress = Signal(int)
+    finished = Signal()
+    error = Signal(str)
+    streaming_finished = Signal()
 
     def __init__(
         self, hcam, stop_signal, buffer_number, stream_duration, parent=None
@@ -3039,9 +3037,9 @@ class StreamingWorker(QObject):
 
 
 class LiveWorker(QObject):
-    finished = pyqtSignal()
-    error = pyqtSignal(str)
-    update_image = pyqtSignal(np.ndarray)
+    finished = Signal()
+    error = Signal(str)
+    update_image = Signal(np.ndarray)
 
     def __init__(self, hcam, live_update_interval, parent=None):
         super().__init__(parent)
@@ -3104,9 +3102,9 @@ class LiveWorker(QObject):
 
 
 class SaveWorker(QObject):
-    finished = pyqtSignal()
-    error = pyqtSignal(str)
-    update_progress = pyqtSignal(int)
+    finished = Signal()
+    error = Signal(str)
+    update_progress = Signal(int)
 
     def __init__(
         self, video_list, dims, image_count, metaData, file_dir, parent=None

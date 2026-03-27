@@ -9,7 +9,7 @@ import logging
 import time
 
 import numpy as np
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+from qtpy.QtCore import QThread, Signal, Slot
 
 from .pressurecontroller import PressureController
 
@@ -19,7 +19,7 @@ class PressureThread(QThread):
     This class is for controlling the Pressure Controller.
     """
 
-    measurement = pyqtSignal(np.ndarray)
+    measurement = Signal(np.ndarray)
 
     def __init__(self, pressurecontroller_handle=None):
         self.parent = None
@@ -97,7 +97,7 @@ class PressureThread(QThread):
 
         self.waveform = P
 
-    @pyqtSlot()
+    @Slot()
     def measure(self):
         logging.info("pressure thread started")
 

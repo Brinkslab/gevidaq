@@ -21,9 +21,10 @@ import pyqtgraph as pg
 import pyqtgraph.exporters
 from matplotlib import pyplot as plt
 from PIL import Image
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QThread, pyqtSignal
-from PyQt5.QtWidgets import (
+from pyqtgraph import PlotDataItem
+from qtpy import QtWidgets
+from qtpy.QtCore import QThread, Signal
+from qtpy.QtWidgets import (
     QButtonGroup,
     QCheckBox,
     QComboBox,
@@ -40,7 +41,6 @@ from PyQt5.QtWidgets import (
     QTabWidget,
     QWidget,
 )
-from pyqtgraph import PlotDataItem
 
 from .. import StylishQT
 from ..ThorlabsFilterSlider.filterpyserial import ELL9Filter
@@ -61,9 +61,9 @@ CAMERA_TRIGGER_INSERT_ARRAY = np.array(
 
 class WaveformGenerator(QWidget):
 
-    WaveformPackage = pyqtSignal(object)
-    GalvoScanInfor = pyqtSignal(object)
-    waveform_started = pyqtSignal()
+    WaveformPackage = Signal(object)
+    GalvoScanInfor = Signal(object)
+    waveform_started = Signal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -748,9 +748,9 @@ class WaveformGenerator(QWidget):
         self.Digital_channel_combox.addItems(self.DigitalChannelList)
         self.DigitalLayout.addWidget(self.Digital_channel_combox, 0, 0)
 
-        self.button3 = StylishQT.addButton()
-        self.DigitalLayout.addWidget(self.button3, 0, 1)
-        self.button3.clicked.connect(self.add_waveform_digital)
+        self.addDigitalSignalButton = StylishQT.addButton()
+        self.DigitalLayout.addWidget(self.addDigitalSignalButton, 0, 1)
+        self.addDigitalSignalButton.clicked.connect(self.add_waveform_digital)
 
         self.button_del_digital = StylishQT.stop_deleteButton()
         self.button_del_digital.setFixedHeight(32)
@@ -2615,7 +2615,7 @@ class WaveformGenerator(QWidget):
 
 class DaqProgressBar(QThread):
     # Create a counter thread
-    change_value = pyqtSignal(int)
+    change_value = Signal(int)
 
     def setlength(self, TotalTimeProgressBar):
         self.time_to_sleep_along_one_percent = round(

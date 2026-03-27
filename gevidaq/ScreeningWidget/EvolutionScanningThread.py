@@ -14,7 +14,7 @@ import time
 import numpy as np
 import tifffile as skimtiff
 from matplotlib import pyplot as plt
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 from skimage.io import imread
 
 from ..HamamatsuCam.HamamatsuActuator import CamActuator
@@ -28,7 +28,7 @@ from ..ThorlabsFilterSlider.filterpyserial import ELL9Filter
 
 
 class ScanningExecutionThread(QThread):
-    ScanningResult = pyqtSignal(
+    ScanningResult = Signal(
         np.ndarray, np.ndarray, object, object
     )  # The signal for the measurement, we can connect to this signal
 

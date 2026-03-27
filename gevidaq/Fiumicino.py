@@ -32,7 +32,7 @@ import sys
 
 import pyqtgraph as pg
 import pyqtgraph.console
-from PyQt5 import QtCore, QtGui, QtWidgets
+from qtpy import QtCore, QtGui, QtWidgets
 
 from . import Icons
 
@@ -82,9 +82,9 @@ def imports():
 
 
 class Mainbody(QtWidgets.QWidget):
-    savedirectory_changed = QtCore.pyqtSignal(str)
-    shutdownSignal = QtCore.pyqtSignal()
-    startupComplete = QtCore.pyqtSignal()
+    savedirectory_changed = QtCore.Signal(str)
+    shutdownSignal = QtCore.Signal()
+    startupComplete = QtCore.Signal()
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

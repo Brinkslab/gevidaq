@@ -22,10 +22,10 @@ from matplotlib.backends.backend_qt5agg import (
     NavigationToolbar2QT as NavigationToolbar,
 )
 from matplotlib.figure import Figure
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import pyqtSignal
-from PyQt5.QtGui import QFont, QTextCursor
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import Signal
+from qtpy.QtGui import QFont, QTextCursor
+from qtpy.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QGridLayout,
@@ -62,7 +62,7 @@ def run_in_thread(fn):
 
 
 class MainGUI(QWidget):
-    waveforms_generated = pyqtSignal(object, object, list, int)
+    waveforms_generated = Signal(object, object, list, int)
 
     # %%
     def __init__(self, *args, **kwargs):

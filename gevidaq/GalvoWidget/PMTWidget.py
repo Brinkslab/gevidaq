@@ -14,10 +14,10 @@ import numpy as np
 import pyqtgraph as pg
 import tifffile as skimtiff
 from PIL import Image
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QPoint, Qt, pyqtSignal
-from PyQt5.QtGui import QColor, QFont, QPen
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import QPoint, Qt, Signal
+from qtpy.QtGui import QColor, QFont, QPen
+from qtpy.QtWidgets import (
     QComboBox,
     QDoubleSpinBox,
     QFileDialog,
@@ -43,11 +43,9 @@ from .pmt_thread import pmtimagingTest, pmtimagingTest_contour
 
 class PMTWidgetUI(QWidget):
 
-    SignalForContourScanning = pyqtSignal(
-        int, int, int, np.ndarray, np.ndarray
-    )
-    GalvoCoordinatesCommand = pyqtSignal(int, int)
-    MessageBack = pyqtSignal(str)
+    SignalForContourScanning = Signal(int, int, int, np.ndarray, np.ndarray)
+    GalvoCoordinatesCommand = Signal(int, int)
+    MessageBack = Signal(str)
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

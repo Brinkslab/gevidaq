@@ -11,7 +11,7 @@ import logging
 import sys
 
 import numpy as np
-from PyQt5.QtCore import QObject, QThread
+from qtpy.QtCore import QObject, QThread
 
 from .workers import Worker
 

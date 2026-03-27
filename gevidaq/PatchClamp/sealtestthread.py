@@ -12,7 +12,7 @@ import nidaqmx
 import numpy as np
 from nidaqmx.stream_readers import AnalogMultiChannelReader
 from nidaqmx.stream_writers import AnalogSingleChannelWriter
-from PyQt5.QtCore import QThread, pyqtSignal, pyqtSlot
+from qtpy.QtCore import QThread, Signal, Slot
 
 from ..NIDAQ.constants import MeasurementConstants, NiDaqChannels
 from ..NIDAQ.wavegenerator import blockWave
@@ -28,7 +28,7 @@ class SealTestThread(QThread):
     set in the UI are corresponding to the gains on the patchclamp.
     """
 
-    measurement = pyqtSignal(np.ndarray, np.ndarray)  # Voltage, Current
+    measurement = Signal(np.ndarray, np.ndarray)  # Voltage, Current
 
     def __init__(self):
         # inherit a QThread to run parallel from the GUI
@@ -173,7 +173,7 @@ class SealTestThread(QThread):
         # resume sealtestthread
         self.start()
 
-    @pyqtSlot()
+    @Slot()
     def measure(self):
         """
         Starts writing a waveform continuously to the patchclamp. While reading

@@ -8,9 +8,9 @@ Created on Mon Sep 28 11:42:01 2020
 import sys
 import threading
 
-from PyQt5 import QtWidgets
-from PyQt5.QtGui import QFont
-from PyQt5.QtWidgets import QGridLayout, QWidget
+from qtpy import QtWidgets
+from qtpy.QtGui import QFont
+from qtpy.QtWidgets import QGridLayout, QWidget
 
 from .. import StylishQT
 from .KCube_backend import KCube

@@ -48,6 +48,7 @@ dependencies= [
   "plotly",
   "pyqtgraph",
   "pyserial",
+  "qtpy",
   "scikit-image",
   "scipy",
   "seaborn",

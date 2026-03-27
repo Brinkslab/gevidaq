@@ -9,10 +9,10 @@ import sys
 import threading
 
 import pyqtgraph as pg
-from PyQt5 import QtWidgets
-from PyQt5.QtCore import QSize, Qt
-from PyQt5.QtGui import QFont, QIcon
-from PyQt5.QtWidgets import (
+from qtpy import QtWidgets
+from qtpy.QtCore import QSize, Qt
+from qtpy.QtGui import QFont, QIcon
+from qtpy.QtWidgets import (
     QGridLayout,
     QGroupBox,
     QLabel,

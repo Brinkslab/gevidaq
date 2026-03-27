@@ -14,7 +14,7 @@ import nidaqmx
 import numpy as np
 from nidaqmx.stream_readers import AnalogSingleChannelReader
 from nidaqmx.stream_writers import AnalogMultiChannelWriter
-from PyQt5.QtCore import QThread, pyqtSignal
+from qtpy.QtCore import QThread, Signal
 
 from ..NIDAQ import wavegenerator
 
@@ -22,7 +22,7 @@ from ..NIDAQ import wavegenerator
 
 
 class pmtimaging_continuous_Thread(QThread):
-    measurement = pyqtSignal(
+    measurement = Signal(
         np.ndarray
     )  # The signal for the measurement, we can connect to this signal
 
@@ -207,7 +207,7 @@ class pmtimagingTest:
 
 
 class pmtimaging_continuous_Thread_contour(QThread):
-    measurement = pyqtSignal(
+    measurement = Signal(
         np.ndarray
     )  # The signal for the measurement, we can connect to this signal
 

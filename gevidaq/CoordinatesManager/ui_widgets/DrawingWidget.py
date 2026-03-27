@@ -7,8 +7,8 @@ Created on Wed May  6 11:26:55 2020
 """
 
 import pyqtgraph as pg
-from PyQt5 import QtCore
 from pyqtgraph import QtGui
+from qtpy import QtCore
 
 
 class DrawingWidget(pg.ImageView):
