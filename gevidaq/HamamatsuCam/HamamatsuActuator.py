@@ -177,7 +177,7 @@ class CamActuator:
         for _ in range(1):  # Record for range() number of images.
             # frames is a list of HCamData objects, each with the np_array
             # property containing the image frame.
-            frames, self.dims = self.hcam.getFrames()
+            frames, dims = self.hcam.getFrames()
             for aframe in frames:
                 video_list.append(aframe.np_array)
                 imageCount += 1
@@ -200,7 +200,7 @@ class CamActuator:
         while self.isLiving is True:
             # frames is a list of HCamData objects, each with the np_array
             # property containing the image frame.
-            frames, self.dims = self.hcam.getFrames()
+            frames, dims = self.hcam.getFrames()
             self.Live_image = np.resize(
                 frames[-1].np_array, (dims[1], dims[0])
             )
