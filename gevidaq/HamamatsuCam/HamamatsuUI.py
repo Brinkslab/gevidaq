@@ -19,7 +19,7 @@ import numpy as np
 import pyqtgraph as pg
 import tifffile as skimtiff
 from PyQt5 import QtWidgets
-from PyQt5.QtCore import QObject, QRectF, Qt, QThread, pyqtSignal
+from PyQt5.QtCore import QObject, QRectF, Qt, QThread, QTimer, pyqtSignal
 from PyQt5.QtGui import (
     QColor,
     QFont,
@@ -60,6 +60,17 @@ from ..PythonScriptsNike.camera_pmt_registration_points import (
 )
 from ..PythonScriptsNike.image_analyzer import ImageAnalyzer
 
+
+def color_font(text, color):
+    """wraps text in color tags and bolds it
+
+    eg: color_font("text", "#FF0000") for big red text
+
+    returns the text with html markup as used in qt
+    """
+    return f'<font color="{color}"><b>{text}</b></font>'
+
+
 """
 Some general settings for pyqtgraph, these only have to do with appearance
 except for row-major, which inverts the image and puts mirrors some axes.
@@ -82,6 +93,15 @@ class CameraUI(QMainWindow):
 
     def __init__(self, pmt_widget_ui, waveform_widget, *args, **kwargs):
         super().__init__(*args, **kwargs)
+
+        self.temperature_timer = QTimer()
+        self.temperature_timer.setInterval(1000)  # ms
+        self.temperature_timer.timeout.connect(self.update_temperature)
+
+        self.check_cooling_task = QTimer()
+        self.check_cooling_task.setInterval(10)  # ms
+        self.check_cooling_task.setSingleShot(True)
+        self.check_cooling_task.timeout.connect(self.check_cooling)
 
         self.pmt_widget_ui = pmt_widget_ui
         pmt_widget_ui.GalvoCoordinatesCommand.connect(
@@ -197,7 +217,7 @@ class CameraUI(QMainWindow):
             "achieve even lower noise (0.8 electrons (median), 1.4 electrons "
             "(r.m.s.)) with a frame rate of 30 fps for full resolution."
         )
-        CameraSettingTab_1.layout.addWidget(Label_readoutspeed, 2, 0)
+        CameraSettingTab_1.layout.addWidget(Label_readoutspeed, 2, 0, 1, 2)
         self.ReadoutSpeedSwitchButton = StylishQT.MySwitch(
             "Normal", "yellow", "Fast", "cyan", width=42
         )
@@ -205,7 +225,7 @@ class CameraUI(QMainWindow):
             self.ReadoutSpeedSwitchEvent
         )
         CameraSettingTab_1.layout.addWidget(
-            self.ReadoutSpeedSwitchButton, 2, 1, 1, 2
+            self.ReadoutSpeedSwitchButton, 2, 2, 1, 2
         )
 
         self.DefectCorrectionButton = QPushButton("Pixel corr.")
@@ -222,7 +242,9 @@ class CameraUI(QMainWindow):
             "sensor. The camera has real-time variant pixel correction "
             "features to improve image quality."
         )
-        CameraSettingTab_1.layout.addWidget(self.DefectCorrectionButton, 2, 3)
+        CameraSettingTab_1.layout.addWidget(
+            self.DefectCorrectionButton, 3, 2, 1, 2
+        )
 
         CameraImageFormatContainer = QGroupBox("Image format")
         CameraImageFormatContainer.setStyleSheet(
@@ -285,17 +307,28 @@ class CameraUI(QMainWindow):
         self.CamExposureBox.setMaximum(10)
         self.CamExposureBox.setSingleStep(0.001)
 
-        CamExposureButton = QPushButton("Set exposure")
+        CamExposureButton = QPushButton("Set exp.")
         CamExposureButton.clicked.connect(self.set_exposure_clicked)
 
         CameraSettingTab_1.layout.addWidget(
-            QLabel("Exposure time:"), 4, 0, 1, 1
+            QLabel("Exposure time:"), 4, 0, 1, 2
         )
-        CameraSettingTab_1.layout.addWidget(self.CamExposureBox, 4, 1, 1, 1)
-        CameraSettingTab_1.layout.addWidget(CamExposureButton, 4, 2, 1, 1)
+        CameraSettingTab_1.layout.addWidget(self.CamExposureBox, 4, 2)
+        CameraSettingTab_1.layout.addWidget(CamExposureButton, 4, 3)
         self.CamExposureBox.setToolTip(
             "The exposure time setting can be done by the units of seconds."
         )
+
+        self.temperature_label_label = QLabel("Current temperature:")
+        self.temperature_label = QLabel(color_font("N/A", "darkred"))
+        self.cooler_button = QPushButton("N/A")
+        CameraSettingTab_1.layout.addWidget(
+            self.temperature_label_label, 5, 0, 1, 2
+        )
+        CameraSettingTab_1.layout.addWidget(self.temperature_label, 5, 2, 1, 1)
+        CameraSettingTab_1.layout.addWidget(self.cooler_button, 5, 3, 1, 1)
+        self.cooler_button.clicked.connect(self.change_cooling)
+        self.cooling_state = "unknown"
 
         self.CamExposureBox.setKeyboardTracking(False)
 
@@ -1279,13 +1312,50 @@ class CameraUI(QMainWindow):
             elif self.trigger_active == "SYNCREADOUT":
                 self.ExternTriggerSignalComboBox.setCurrentIndex(3)
 
+            self.temperature_timer.start()
+            self.check_cooling_task.start()
+
             # Toggle the switch button.
             self.cam_connect_button.setChecked(True)
 
     def DisconnectCamera(self):
+        self.temperature_timer.stop()
+        self.temperature_label.setText(color_font("N/A", "darkred"))
+        self.check_cooling_task.stop()
+        self.cooler_button.setText("N/A")
         self.hcam.shutdown()
         self.dcam.dcamapi_uninit()
         self.CamStatusLabel.setText("Camera disconnected.")
+
+    def update_temperature(self):
+        temp = self.hcam.getTemperature()
+        text = f"{temp}°C"
+        if temp > 0:
+            text = color_font(text, "darkred")
+        elif temp > -15:
+            text = color_font(text, "purple")
+        else:
+            text = color_font(text, "darkblue")
+
+        self.temperature_label.setText(text)
+
+    def change_cooling(self):
+        states = ["off", "on", "max"]
+        index = states.index(self.cooling_state)
+        next_state = (index + 1) % len(states)
+        self.hcam.setCoolerOn(states[next_state])
+        self.check_cooling_task.start()
+
+    def check_cooling(self):
+        self.cooling_state = self.hcam.getCoolerOn()
+        if self.cooling_state == "on":
+            self.cooler_button.setText("cool")
+        elif self.cooling_state == "max":
+            self.cooler_button.setText("cool+")
+        elif self.cooling_state == "off":
+            self.cooler_button.setText("off!")
+        else:
+            self.cooler_button.setText("N/A")
 
     def cam_connect_switch(self):
 
@@ -1415,9 +1485,12 @@ class CameraUI(QMainWindow):
         self.timing_readout_time = self.hcam.getPropertyValue(
             "timing_readout_time"
         )[0]
-        self.CamReadoutTimeLabel.setText(
-            "Readout speed: {}".format(round(1 / self.timing_readout_time, 2))
-        )
+        if self.timing_readout_time:
+            speed = round(1 / self.timing_readout_time, 2)
+        else:
+            speed = "N/A"
+
+        self.CamReadoutTimeLabel.setText(f"Readout speed: {speed}")
 
     def ReadoutSpeedSwitchEvent(self):
         """Set the readout speed.
