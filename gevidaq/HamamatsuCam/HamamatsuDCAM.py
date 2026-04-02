@@ -96,6 +96,16 @@ DCAMBUF_ATTACHKIND_FRAME = 0
 DCAMBUF_ATTACHKIND_TIMESTAMP = 1
 DCAMBUF_ATTACHKIND_FRAMESTAMP = 2
 
+# taken from dcamprop.h as provided in the "DCAM-SDK" found at:
+# https://www.hamamatsu.com/jp/en/product/cameras/software/driver-software/dcam-sdk4.html
+DCAM_IDPROP_SENSORTEMPERATURE = 0x00200310  # R/O,celsius,"SENSOR TEMPERATURE"
+DCAM_IDPROP_SENSORCOOLER = 0x00200320  # R/W,mode,"SENSOR COOLER"
+DCAM_IDPROP_SENSORCOOLERSTATUS = 0x00200340  # R/O,mode,"SENSOR COOLER STATUS"
+
+DCAMPROP_SENSORCOOLER__OFF = 1
+DCAMPROP_SENSORCOOLER__ON = 2
+DCAMPROP_SENSORCOOLER__MAX = 4
+
 # Specify dcam-api location
 try:
     files = importlib.resources.files(sys.modules[__package__])
@@ -982,6 +992,66 @@ class HamamatsuCamera(object):
         """
         text_values = self.getPropertyText(property_name)
         return sorted(text_values, key=text_values.get)
+
+    def getTemperature(self):
+        """get the current camera temperature
+
+        returns the temperature, in celcius
+        """
+        c_value = ctypes.c_double(0)
+        self.checkStatus(
+            dcam.dcamprop_getvalue(
+                self.camera_handle,
+                ctypes.c_int32(DCAM_IDPROP_SENSORTEMPERATURE),
+                ctypes.byref(c_value),
+            ),
+            "dcamprop_getvalue",
+        )
+        return c_value.value
+
+    def getCoolerOn(self):
+        """get wether or not the cooler is on
+
+        returns "off", "on", or "max"
+        """
+        c_value = ctypes.c_double(0)
+        self.checkStatus(
+            dcam.dcamprop_getvalue(
+                self.camera_handle,
+                ctypes.c_int32(DCAM_IDPROP_SENSORCOOLER),
+                ctypes.byref(c_value),
+            ),
+            "dcamprop_getvalue",
+        )
+        if c_value.value == DCAMPROP_SENSORCOOLER__ON:
+            return "on"
+        elif c_value.value == DCAMPROP_SENSORCOOLER__MAX:
+            return "max"
+        else:
+            return "off"
+
+    def setCoolerOn(self, value):
+        """set wether or not the cooler is on
+
+        value: "off", "on", or "max"
+        """
+        value = str(value).lower()
+        if value == "on":
+            p_value = ctypes.c_double(DCAMPROP_SENSORCOOLER__ON)
+        elif value == "max":
+            p_value = ctypes.c_double(DCAMPROP_SENSORCOOLER__MAX)
+        else:
+            p_value = ctypes.c_double(DCAMPROP_SENSORCOOLER__OFF)
+
+        self.checkStatus(
+            dcam.dcamprop_setgetvalue(
+                self.camera_handle,
+                ctypes.c_int32(DCAM_IDPROP_SENSORCOOLER),
+                ctypes.byref(p_value),
+                ctypes.c_int32(DCAM_DEFAULT_ARG),
+            ),
+            "dcamprop_setgetvalue",
+        )
 
 
 class HamamatsuCameraMR(HamamatsuCamera):
