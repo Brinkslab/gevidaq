@@ -473,7 +473,7 @@ class ProcessImage:
                         CellSequenceInRegion += 1
         if show_img is True:
             ax_showlabel.set_axis_off()
-            plt.show()
+            # plt.show()
 
         TagFluorescenceLookupBook = np.zeros(CellSequenceInRegion, dtype=dtype)
         for p in range(CellSequenceInRegion):
@@ -678,7 +678,7 @@ class ProcessImage:
 
         if show_img is True:
             ax_showlabel.set_axis_off()
-            plt.show()
+            # plt.show()
 
         LibFluorescenceLookupBook = np.zeros(CellSequenceInRegion, dtype=dtype)
         for p in range(CellSequenceInRegion):
@@ -1065,7 +1065,7 @@ class ProcessImage:
                     ax2.imshow(
                         filtered_cellmap * 2 + RawRegionImg, cmap=plt.cm.gray
                     )
-                    plt.show()
+                    # plt.show()
 
                     # ------------Organize for Ni-daq execution---------------------
                     voltage_contour_routine_X = (
@@ -1400,7 +1400,7 @@ class ProcessImage:
             plt.figure()
             plt.title("Average trace")
             plt.plot(avg_cell_trace)
-            plt.show()
+            # plt.show()
 
             fluorescence_trace_normalized = ProcessImage.Biexponential_fit(
                 avg_cell_trace, sampling_rate=500
@@ -1413,7 +1413,7 @@ class ProcessImage:
             plt.figure()
             plt.title("Normalized trace, SNR = {}".format(SNR))
             plt.plot(fluorescence_trace_normalized[200:1000])
-            plt.show()
+            # plt.show()
 
         elif method == "Average over 5000 trials":
             # Average over 5000 traces
@@ -1422,7 +1422,7 @@ class ProcessImage:
             plt.figure()
             plt.title("Average trace")
             plt.plot(avg_cell_trace)
-            plt.show()
+            # plt.show()
 
             std_list = []
             for each_point_index in range(100):
@@ -1444,7 +1444,7 @@ class ProcessImage:
                         )
                     )
                     plt.hist(sample_point_array, 100)
-                    plt.show()
+                    # plt.show()
 
                     # Average over 50 points
                     avg_std_sample_point = np.mean(
@@ -1458,7 +1458,7 @@ class ProcessImage:
                     )
                     plt.hist(avg_std_sample_point, 30)
                     plt.xlim(0.2, 0.6)
-                    plt.show()
+                    # plt.show()
 
                 std_each_point = np.std(np.array(individual_points_array))
                 std_list.append(std_each_point)
@@ -1914,7 +1914,7 @@ class ProcessImage:
                     # axs[2].imshow(cell_contour_mask_processed, cmap="gray")
                     # axs[2].set_title("Cell contour trimed")
                     # axs[2].set_xticks([])
-                    plt.show()
+                    # plt.show()
 
                 # === Calculate intensity based on masks ===
                 # Mean pixel value of cell membrane.
@@ -3541,7 +3541,7 @@ class ProcessImage:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
 
         # Normalization of fluorescence signal (e.g., division by the fit)
         fluorescence_trace_normalized = np.true_divide(
@@ -3638,7 +3638,7 @@ class ProcessImage:
                 "Experimental data",
             ],
         )
-        plt.show()
+        # plt.show()
 
         # Normalization of fluorescence signal (e.g., division by the fit)
         fluorescence_trace_normalized = np.true_divide(
@@ -3740,7 +3740,7 @@ class ProcessImage:
             ax.spines["top"].set_visible(False)
             ax.xaxis.set_ticks_position("bottom")
             ax.yaxis.set_ticks_position("left")
-            plt.show()
+            # plt.show()
 
         # Normalize
         if normalize_method == "true divide":
@@ -4640,7 +4640,7 @@ class ProcessImage:
         )
         ax1.set_xlabel("time(s)")
         ax1.set_ylabel("Current (pA)")
-        plt.show()
+        # plt.show()
 
         if True:
             electrical_signals_figure.savefig(
@@ -4700,7 +4700,7 @@ class ProcessImage:
         plt.plot(time_axis, avg_cell_trace)
         ax.set_ylabel("Fluorescence (a.u.)", fontsize=11)
         ax.set_xlabel("Time (s)", fontsize=11)
-        plt.show()
+        # plt.show()
 
         # Correct for photo-bleaching
         fluorescence_trace_normalized = ProcessImage.Biexponential_fit(
@@ -4713,7 +4713,7 @@ class ProcessImage:
         ax.set_ylabel("Fluorescence (a.u.)", fontsize=11)
         ax.set_xlabel("Time (s)", fontsize=11)
         ax.plot(time_axis, fluorescence_trace_normalized)
-        plt.show()
+        # plt.show()
 
         # Average over repeative periods
         # Average from the late 80% of the trials
@@ -4744,7 +4744,7 @@ class ProcessImage:
         plt.plot(time_axis, averaged_single_period)
         ax.set_ylabel("Fluorescence (a.u.)", fontsize=11)
         ax.set_xlabel("Time (s)", fontsize=11)
-        plt.show()
+        # plt.show()
 
         # SNR analysis
         SNR = ProcessImage.signal_to_noise(
@@ -4761,7 +4761,7 @@ class ProcessImage:
         plt.plot(time_axis, fluorescence_trace_normalized[200:1000])
         ax.set_ylabel("Fluorescence (a.u.)", fontsize=11)
         ax.set_xlabel("Time (s)", fontsize=11)
-        plt.show()
+        # plt.show()
 
         return averaged_single_period
 
@@ -4937,7 +4937,7 @@ class ProcessImage:
 
             # Save the figure and show
             plt.tight_layout()
-            plt.show()
+            # plt.show()
 
     def Screening_scatters_3D(path, dark_style=False):
         xls = pd.ExcelFile(path)
@@ -4974,7 +4974,7 @@ class ProcessImage:
         ax.set_title("Mutants performance space")
         ax.set_zlabel("Absolute intensity")
 
-        plt.show()
+        # plt.show()
 
     def Compare_df_bargraph(
         path, sheet_dictionary, key_field=["df/f"], title="", dark_style=False
@@ -5172,7 +5172,7 @@ class ProcessImage:
             # Save the figure and show
             plt.tight_layout()
             # plt.savefig('bar_plot_with_error_bars.png')
-            plt.show()
+            # plt.show()
 
     # %%
     # Curve fitting, updated version
@@ -5323,7 +5323,7 @@ class PatchAnalysis:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig1.savefig(
                 (
@@ -5366,7 +5366,7 @@ class PatchAnalysis:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig2.savefig(
                 (
@@ -5387,7 +5387,7 @@ class PatchAnalysis:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig3.savefig(
                 (
@@ -5540,7 +5540,7 @@ class PatchAnalysis:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig5.savefig(
                 (
@@ -5608,7 +5608,7 @@ class PatchAnalysis:
         ax_2.spines["top"].set_visible(False)
         ax_2.xaxis.set_ticks_position("bottom")
         ax_2.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig5_2.savefig(
                 (
@@ -5706,7 +5706,7 @@ class PatchAnalysis:
         ax2.spines["top"].set_visible(False)
         ax2.xaxis.set_ticks_position("bottom")
         ax2.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig6.savefig(
                 (
@@ -5769,7 +5769,7 @@ class PatchAnalysis:
         ax2_2.spines["top"].set_visible(False)
         ax2_2.xaxis.set_ticks_position("bottom")
         ax2_2.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig6_2.savefig(
                 (
@@ -5834,7 +5834,7 @@ class PatchAnalysis:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig_averaged_period.savefig(
                 (
@@ -5998,7 +5998,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig1.savefig(
                 (
@@ -6041,7 +6041,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig2.savefig(
                 (
@@ -6062,7 +6062,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig3.savefig(
                 (
@@ -6536,7 +6536,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig.savefig(
                 (
@@ -6643,7 +6643,7 @@ class CurveFit:
         ax2.spines["top"].set_visible(False)
         ax2.xaxis.set_ticks_position("bottom")
         ax2.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig2.savefig(
                 (
@@ -6759,7 +6759,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig5.savefig(
                 (
@@ -6896,7 +6896,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig6.savefig(
                 (
@@ -6945,7 +6945,7 @@ class CurveFit:
         ax.spines["top"].set_visible(False)
         ax.xaxis.set_ticks_position("bottom")
         ax.yaxis.set_ticks_position("left")
-        plt.show()
+        # plt.show()
         if self.main_directory is not None:
             fig_averaged_period.savefig(
                 (
