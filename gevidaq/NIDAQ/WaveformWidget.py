@@ -68,15 +68,6 @@ class WaveformGenerator(QWidget):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        try:
-            get_ipython = sys.modules["IPython"].get_ipython
-        except KeyError:
-            pass
-        else:
-            get_ipython().run_line_magic(
-                "matplotlib", "qt"
-            )  # before start, set spyder back to inline
-
         self.layout = QGridLayout(self)
         # Setting tabs
         self.tabs = StylishQT.roundQGroupBox("Waveforms")
