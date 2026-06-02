@@ -46,6 +46,7 @@ from .. import StylishQT
 from ..ThorlabsFilterSlider.filterpyserial import ELL9Filter
 from . import waveform_specification
 from .DAQoperator import DAQmission
+from .pulse_generator import PulseGenerator
 from .wavegenerator import (
     generate_AO,
     generate_AO_for640,
@@ -337,12 +338,19 @@ class WaveformGenerator(QWidget):
         executionContainerLayout.addWidget(self.button_all, 0, 1)
         self.button_all.clicked.connect(self.organize_waveforms)
 
+        self.pulse = None
+        self.pulse_generator = QCheckBox("Check pulse generator")
+        self.pulse_generator.setStyleSheet(
+            'color:CadetBlue;font:bold "Times New Roman"'
+        )
+        executionContainerLayout.addWidget(self.pulse_generator, 1, 3)
+
         self.button_execute = StylishQT.runButton("Execute")
         self.button_execute.setEnabled(False)
         self.button_execute.setFixedWidth(110)
         executionContainerLayout.addWidget(self.button_execute, 1, 1)
 
-        self.button_execute.clicked.connect(self.execute_tread)
+        self.button_execute.clicked.connect(self.execute_thread)
         self.button_execute.clicked.connect(self.startProgressBar)
 
         self.button_clear_canvas = StylishQT.cleanButton(label=" Canvas")
@@ -378,7 +386,8 @@ class WaveformGenerator(QWidget):
             lambda: self.setAppendModeFlag()
         )
         self.switchAppendModeSwitch.setToolTip(
-            "In append mode, new waveforms will append at the end of the existing one."
+            "In append mode, new waveforms will append at the end of the "
+            "existing one."
         )
 
         self.AnalogLayout.addWidget(self.switchAppendModeSwitch, 3, 3)
@@ -2232,7 +2241,7 @@ class WaveformGenerator(QWidget):
         filename += ".png"
         exporter.export(os.path.join(self.savedirectory, filename))
 
-    def execute_tread(self):
+    def execute_thread(self):
         """
         Tread to move filter in advance.
 
@@ -2240,6 +2249,15 @@ class WaveformGenerator(QWidget):
         None.
 
         """
+        if self.pulse_generator.isChecked():
+            if not self.pulse:
+                ai_channel = "Dev1/ai1"
+                ao_channel = "Dev1/ao0"
+                self.pulse = PulseGenerator(ai_channel, ao_channel)
+                duration_seconds = 60
+                self.pulse.detect_rising_edge(duration_seconds)
+                self.pulse.close()
+
         if self.FilterButtongroup.checkedId() == -1:
             # No emission filter configured.
             pass
