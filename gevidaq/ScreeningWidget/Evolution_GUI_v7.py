@@ -1622,7 +1622,7 @@ class Mainbody(QtWidgets.QWidget):
 
     def openScreenAnalysisMLWidget(self):
         self.ScreenAnalysisMLWindow.deleteLater()
-        self.ScreenAnalysisMLWindow = EvolutionAnalysisWidget.MainGUI()
+        self.ScreenAnalysisMLWindow = EvolutionAnalysisWidget.MainGUI(self)
         self.ScreenAnalysisMLWindow.show()
 
     # %%

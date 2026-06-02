@@ -63,6 +63,7 @@ def imports():
     global NIDAQ, CoordinatesManager, GalvoWidget, HamamatsuCam, ImageAnalysis
     global InsightX3, PatchClamp, PI_ObjectiveMotor, SampleStageControl
     global ScreeningWidget, StylishQT, ThorlabsFilterSlider, ThorlabsKCube
+    global settings, SettingsWidget
 
     from . import (
         NIDAQ,
@@ -79,6 +80,8 @@ def imports():
         ThorlabsFilterSlider,
         ThorlabsKCube,
     )
+    from .NIDAQ import settings  # noqa
+    from .Settings import SettingsWidget
 
 
 class Mainbody(QtWidgets.QWidget):
@@ -135,6 +138,7 @@ class Mainbody(QtWidgets.QWidget):
         self.Coordinate_WidgetInstance = (
             CoordinatesManager.CoordinateWidget.CoordinatesWidgetUI()
         )
+        self.settings_widget_instance = SettingsWidget.SettingsWidgetUI(self)
 
         # === Add tab widgets ===
         self.tabs.addTab(self.Camera_WidgetInstance, "Camera imaging")
@@ -143,6 +147,7 @@ class Mainbody(QtWidgets.QWidget):
         # self.tabs.addTab(self.PatchClamp_WidgetInstance,"Patch clamp")
         self.tabs.addTab(self.Coordinate_WidgetInstance, "Coordinates")
         self.tabs.addTab(self.Analysis_WidgetInstance, "Image analysis")
+        self.tabs.addTab(self.settings_widget_instance, "Settings")
 
         self.savedirectory = ""
 
